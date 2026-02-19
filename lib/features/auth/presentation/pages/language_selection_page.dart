@@ -83,15 +83,15 @@ class LanguageSelectionPage extends StatelessWidget {
               children: [
                 Text(
                   "Choose your language",
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.primaryBackground),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.primaryBackground, fontSize: 24, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppTheme.space8),
                 Text(
-                  "භාෂාව තෝරන්න | மொழியைத்",
+                  "භාෂාව තෝරන්න | மொழியைத் தேர்ந்தெடுக்கவும்",
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyLarge?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.7)),
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.7)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppTheme.space32),
@@ -102,19 +102,19 @@ class LanguageSelectionPage extends StatelessWidget {
                   style: AppTheme.secondaryButton,
                   child: const Text("English"),
                 ),
-                const SizedBox(height: AppTheme.space16),
+                const SizedBox(height: AppTheme.space24),
                 ElevatedButton(
                   onPressed: () => Navigator.pushNamed(context, '/role'),
                   style: AppTheme.secondaryButton,
                   child: const Text("සිංහල"),
                 ),
-                const SizedBox(height: AppTheme.space16),
+                const SizedBox(height: AppTheme.space24),
                 ElevatedButton(
                   onPressed: () => Navigator.pushNamed(context, '/role'),
                   style: AppTheme.secondaryButton,
                   child: const Text("தமிழ்"),
                 ),
-                const SizedBox(height: AppTheme.space16),
+                const SizedBox(height: AppTheme.space24),
               ],
             ),
           ),

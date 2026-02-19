@@ -26,7 +26,7 @@ class AppTheme {
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(30),
     ),
-    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 32),
     elevation: 8,
     shadowColor: accentColor.withValues(alpha: 0.2), // Bright green glow
     textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
@@ -39,7 +39,7 @@ class AppTheme {
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(30),
     ),
-    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 32),
     elevation: 8,
     shadowColor: primaryBackground.withValues(alpha: 0.2), // Dark green glow
     textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Inter'),

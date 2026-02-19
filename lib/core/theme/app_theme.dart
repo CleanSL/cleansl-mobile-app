@@ -19,33 +19,7 @@ class AppTheme {
   static const double space48 = 48.0;
   static const double space64 = 64.0;
 
-  // 3. Primary Elevated Button (Bright Green Accent)
-  static ButtonStyle primaryButton = ElevatedButton.styleFrom(
-    backgroundColor: accentColor,
-    foregroundColor: textColor,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(30),
-    ),
-    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 32),
-    elevation: 8,
-    shadowColor: accentColor.withValues(alpha: 0.2), // Bright green glow
-    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
-  );
-
-  // 4. Secondary Elevated Button (Dark Green)
-  static ButtonStyle secondaryButton = ElevatedButton.styleFrom(
-    backgroundColor: primaryBackground, 
-    foregroundColor: textColor,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(30),
-    ),
-    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 32),
-    elevation: 8,
-    shadowColor: primaryBackground.withValues(alpha: 0.2), // Dark green glow
-    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
-  );
-
-  // 5. Global Theme Definition
+  // 3. Global Theme Definition
   static ThemeData get lightTheme {
     // Base TextTheme using Inter for the body
     TextTheme baseTextTheme = GoogleFonts.interTextTheme();

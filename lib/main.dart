@@ -1,62 +1,77 @@
 import 'package:flutter/material.dart';
-import 'theme/app_theme.dart'; // Importing our custom design system
+// Import custom theme file
+import 'core/theme/app_theme.dart'; 
+// Import feature pages
+import 'features/auth/presentation/pages/language_selection_page.dart';
+import 'features/auth/presentation/pages/role_selection_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  // Ensure Flutter bindings are initialized before running the app
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const SmartResidentApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SmartResidentApp extends StatelessWidget {
+  const SmartResidentApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // Removes the "Debug" banner from the top right corner
       debugShowCheckedModeBanner: false,
-      title: 'CleanSL',
       
-      // THIS is the line that applies our brand guidelines globally
-      theme: AppTheme.lightTheme, 
+      title: 'Smart Resident',
+
+      // Using your custom brand guidelines from app_theme.dart
+      theme: AppTheme.lightTheme,
+
+      // Setting the initial flow: Language -> Role -> Specific Auth
+      initialRoute: '/language',
       
-      home: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppTheme.space24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: AppTheme.space24),
-                  
-                  Text(
-                    'Design System Active',
-                    style: Theme.of(context).textTheme.displaySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppTheme.space16),
-                  
-                  Text(
-                    'If this heading is Roboto Slab, this text is Inter, and the background is Cream (#FFF5DB), your theme is ready to commit.',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppTheme.space32),
-                  
-                  ElevatedButton(
-                    onPressed: () {},
-                    child: const Text('Figma Styled Button'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      // Define the routes for navigation
+      routes: {
+        // Initial Screen
+        '/language': (context) => const LanguageSelectionPage(),
+        
+        // Secondary Common Screen
+        '/role': (context) => const RoleSelectionPage(),
+        
+        // Resident Auth Flow
+        '/resident-auth': (context) => const ResidentAuthHub(), // We can build this next
+        '/resident-signup': (context) => const ResidentSignUpPage(),
+        '/resident-username': (context) => const CreateUsernamePage(),
+        
+        // Driver Auth Flow
+        '/driver-login': (context) => const DriverLoginPage(), // OTP flow
+      },
     );
   }
+}
+
+// --- Placeholder Classes ---
+// I've added these placeholders so the code doesn't crash when you run it.
+// We will replace these with real files as we build them.
+
+class ResidentAuthHub extends StatelessWidget {
+  const ResidentAuthHub({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Resident Sign In / Sign Up Screen")));
+}
+
+class ResidentSignUpPage extends StatelessWidget {
+  const ResidentSignUpPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Resident Sign Up Form")));
+}
+
+class CreateUsernamePage extends StatelessWidget {
+  const CreateUsernamePage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Create Username Screen")));
+}
+
+class DriverLoginPage extends StatelessWidget {
+  const DriverLoginPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Driver OTP Login Screen")));
 }

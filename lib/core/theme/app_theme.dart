@@ -19,7 +19,33 @@ class AppTheme {
   static const double space48 = 48.0;
   static const double space64 = 64.0;
 
-  // 3. Global Theme Definition
+  // 3. Primary Elevated Button (Bright Green Accent)
+  static ButtonStyle primaryButton = ElevatedButton.styleFrom(
+    backgroundColor: accentColor,
+    foregroundColor: textColor,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(30),
+    ),
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+    elevation: 8,
+    shadowColor: accentColor.withValues(alpha: 0.2), // Bright green glow
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
+  );
+
+  // 4. Secondary Elevated Button (Dark Green)
+  static ButtonStyle secondaryButton = ElevatedButton.styleFrom(
+    backgroundColor: primaryBackground, 
+    foregroundColor: textColor,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(30),
+    ),
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+    elevation: 8,
+    shadowColor: primaryBackground.withValues(alpha: 0.2), // Dark green glow
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
+  );
+
+  // 5. Global Theme Definition
   static ThemeData get lightTheme {
     // Base TextTheme using Inter for the body
     TextTheme baseTextTheme = GoogleFonts.interTextTheme();
@@ -43,28 +69,13 @@ class AppTheme {
         titleLarge: GoogleFonts.robotoSlab(color: textColor, fontSize: 18, fontWeight: FontWeight.w600),
         bodyLarge: GoogleFonts.inter(color: textColor, fontSize: 16),
         bodyMedium: GoogleFonts.inter(color: textColor, fontSize: 14),
-        labelLarge: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600), // Button text
+        labelLarge: GoogleFonts.inter(color: textColor, fontSize: 16, fontWeight: FontWeight.w600), // Button text
       ),
 
       // Iconography Defaults
       iconTheme: const IconThemeData(
         color: secondaryColor1,
         size: 24,
-      ),
-
-      // Component Styling: Buttons (30px Pill + Green Glow Shadow)
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accentColor,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30), // Fully Rounded Action Button
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-          elevation: 8,
-          // Creates that 0px 8px 15px rgba(44, 194, 149, 0.2) glow effect
-          shadowColor: accentColor.withValues(alpha: 0.5), 
-        ),
       ),
 
       // Component Styling: Cards (16px radius + Soft Shadow)

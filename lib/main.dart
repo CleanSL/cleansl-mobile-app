@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'theme/app-theme.dart'; // Importing our custom design system
+import 'theme/app_theme.dart'; // Importing our custom design system
 
 void main() {
   runApp(const MyApp());

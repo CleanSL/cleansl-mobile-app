@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 // Import custom theme file
 import 'core/theme/app_theme.dart'; 
 // Import feature pages
-import 'features/auth/presentation/pages/language_selection_page.dart';
-import 'features/auth/presentation/pages/role_selection_page.dart';
+import 'features/onboarding/presentation/pages/language_selection_page.dart';
+import 'features/onboarding/presentation/pages/role_selection_page.dart';
 
 void main() {
   // Ensure Flutter bindings are initialized before running the app

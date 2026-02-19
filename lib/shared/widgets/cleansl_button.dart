@@ -48,7 +48,7 @@ class CleanSlButton extends StatelessWidget {
         break;
       case ButtonVariant.text:
         bgColor = Colors.transparent;
-        textColor = AppTheme.accentColor; // Usually just colored text, no background
+        textColor = AppTheme.hoverColor.withValues(alpha: 0.8); // Usually just colored text, no background
         break;
     }
 

@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'features/onboarding/presentation/pages/language_selection_page.dart';
 import 'features/onboarding/presentation/pages/role_selection_page.dart';
 import 'features/driver_auth/presentation/pages/driver_login_page.dart';
+import 'features/driver_auth/presentation/pages/driver_otp_page.dart';
 
 void main() {
   // Ensure Flutter bindings are initialized before running the app
@@ -34,9 +35,9 @@ class SmartResidentApp extends StatelessWidget {
         '/language': (context) => const LanguageSelectionPage(),
         '/role': (context) => const RoleSelectionPage(),
         '/driver-login': (context) => const DriverLoginPage(),
+        '/driver-otp': (context) => const DriverOtpPage(),
 
         // Placeholder for the next screen we build
-        '/driver-otp': (context) => const Scaffold(body: Center(child: Text("Enter OTP Screen"))),
         '/resident-auth': (context) => const Scaffold(body: Center(child: Text("Resident Auth Hub"))),
       },
     );

@@ -13,7 +13,7 @@ class RoleSelectionPage extends StatelessWidget {
       actionButtons: [
         CleanSlButton(
           text: "Resident",
-          onPressed: () => Navigator.pushNamed(context, '/resident-auth'),
+          onPressed: () => Navigator.pushNamed(context, '/resident-auth-hub'),
           variant: ButtonVariant.primary,
         ),
         const SizedBox(height: 24),

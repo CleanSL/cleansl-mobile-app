@@ -7,6 +7,8 @@ import 'features/onboarding/presentation/pages/role_selection_page.dart';
 import 'features/driver_auth/presentation/pages/driver_login_page.dart';
 import 'features/driver_auth/presentation/pages/driver_otp_page.dart';
 import 'features/resident_auth/presentation/pages/resident_auth_hub_page.dart';
+import 'features/resident_auth/presentation/pages/resident_login_page.dart';
+// import 'features/resident_auth/presentation/pages/resident_signup_page.dart';
 
 void main() {
   // Ensure Flutter bindings are initialized before running the app
@@ -37,9 +39,11 @@ class SmartResidentApp extends StatelessWidget {
         '/role': (context) => const RoleSelectionPage(),
         '/driver-login': (context) => const DriverLoginPage(),
         '/driver-otp': (context) => const DriverOtpPage(),
-
+        '/resident-auth-hub': (context) =>
+            const ResidentAuthHubPage(), // This is the hub where residents choose to log in or sign up
+        '/resident-login': (context) => const ResidentLoginPage(), // Placeholder for the actual login page
         // Placeholder for the next screen we build
-        '/resident-auth-hub': (context) => const ResidentAuthHubPage(),
+        '/resident-signup': (context) => const ResidentSignUpPage(), // Placeholder for the actual sign-up page
       },
     );
   }

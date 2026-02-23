@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
-class CleanSlPhoneInput extends StatelessWidget {
-  // It's good practice to allow passing a controller so you can grab the text later!
+class CleanSlMobNumInput extends StatelessWidget {
   final TextEditingController? controller;
 
-  const CleanSlPhoneInput({
+  const CleanSlMobNumInput({
     super.key,
     this.controller,
   });
@@ -47,20 +46,18 @@ class CleanSlPhoneInput extends StatelessWidget {
         ),
         filled: true,
         fillColor: AppTheme.primaryBackground,
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.space24, vertical: AppTheme.space24),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.0), 
+          borderRadius: BorderRadius.circular(30), 
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.0), 
+          borderRadius: BorderRadius.circular(30), 
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.0),
-          borderSide: BorderSide(
-            color: AppTheme.accentColor.withValues(alpha: 0.5), 
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
         ),
       ),
     );

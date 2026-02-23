@@ -7,13 +7,19 @@ import '../../../../shared/widgets/cleansl_text_input.dart';
 import '../../../../shared/widgets/cleansl_mobnum_input.dart';
 import '../widgets/resident_auth_template.dart';
 
-class ResidentLoginPage extends StatelessWidget {
+class ResidentLoginPage extends StatefulWidget {
   const ResidentLoginPage({super.key});
+
+  @override
+  State<ResidentLoginPage> createState() => _ResidentLoginPageState();
+}
+
+class _ResidentLoginPageState extends State<ResidentLoginPage> {
+  bool _isEmailMode = false;
 
   @override
   Widget build(BuildContext context) {
     final double gap = Responsive.h(context, AppTheme.space16);
-    final double smallGap = Responsive.h(context, AppTheme.space8);
     final double sectionGap = Responsive.h(context, AppTheme.space16);
 
     return ResidentAuthTemplate(
@@ -21,7 +27,9 @@ class ResidentLoginPage extends StatelessWidget {
       subtitle: "Please enter your account details to continue making a difference in your community.",
       topSpacing: AppTheme.space16,
       formChildren: [
-        const CleanSlMobNumInput(),
+        _isEmailMode
+            ? const CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress)
+            : const CleanSlMobNumInput(),
         SizedBox(height: gap),
         const CleanSlTextInput(hintText: "Password", isPassword: true),
 
@@ -73,10 +81,16 @@ class ResidentLoginPage extends StatelessWidget {
         SizedBox(height: gap),
 
         CleanSlButton(
-          text: "Continue with Email",
+          text: _isEmailMode ? "Continue with Mobile Number" : "Continue with Email",
           variant: ButtonVariant.secondary,
-          icon: Icon(Icons.email_outlined, color: AppTheme.textColor, size: Responsive.w(context, 28)),
-          onPressed: () {},
+          icon: _isEmailMode
+              ? Icon(Icons.phone_android_rounded, color: AppTheme.textColor, size: Responsive.w(context, 28))
+              : Icon(Icons.email_outlined, color: AppTheme.textColor, size: Responsive.w(context, 28)),
+          onPressed: () {
+            setState(() {
+              _isEmailMode = !_isEmailMode;
+            });
+          },
         ),
 
         SizedBox(height: sectionGap),

@@ -1,64 +1,60 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 class CleanSlMobNumInput extends StatelessWidget {
   final TextEditingController? controller;
 
-  const CleanSlMobNumInput({
-    super.key,
-    this.controller,
-  });
+  const CleanSlMobNumInput({super.key, this.controller});
 
   @override
   Widget build(BuildContext context) {
+    final double hPad = Responsive.w(context, AppTheme.space24);
+    final double vPad = Responsive.h(context, 20);
+    final double radius = Responsive.r(context, 30);
+    final double iconSize = Responsive.w(context, 24);
+
     return TextField(
       controller: controller,
       keyboardType: TextInputType.phone,
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: AppTheme.textColor,
-            fontWeight: FontWeight.w400,
-          ),
+        color: AppTheme.textColor,
+        fontWeight: FontWeight.w400,
+        fontSize: Responsive.sp(context, 16),
+      ),
       decoration: InputDecoration(
         hintText: "77 123 4567",
         prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 12.0, right: 8.0),
+          padding: EdgeInsets.only(left: Responsive.w(context, 12), right: Responsive.w(context, 8)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.phone_android_rounded, color: AppTheme.accentColor),
-              const SizedBox(width: 8),
+              Icon(Icons.phone_android_rounded, color: AppTheme.accentColor, size: iconSize),
+              SizedBox(width: Responsive.w(context, 8)),
               Text(
                 "+94",
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.textColor,
-                      fontWeight: FontWeight.w400,
-                    ),
+                  color: AppTheme.textColor,
+                  fontWeight: FontWeight.w400,
+                  fontSize: Responsive.sp(context, 16),
+                ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: Responsive.w(context, 12)),
               Container(
-                height: 24, 
-                width: 1, 
+                height: Responsive.h(context, 24),
+                width: 1,
                 color: AppTheme.secondaryColor1.withValues(alpha: 0.2),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: Responsive.w(context, 8)),
             ],
           ),
         ),
         filled: true,
         fillColor: AppTheme.primaryBackground,
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.space24, vertical: AppTheme.space24),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), 
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), 
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: BorderSide.none),
       ),
     );
   }

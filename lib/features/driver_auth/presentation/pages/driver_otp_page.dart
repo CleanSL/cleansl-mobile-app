@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/cleansl_button.dart';
 import '../../../../shared/widgets/cleansl_otp_input.dart';
-import '../../../../shared/widgets/cleansl_resend_timer.dart'; // Import the new timer
+import '../../../../shared/widgets/cleansl_resend_timer.dart';
 import '../../../onboarding/presentation/widgets/auth_screen_template.dart';
 
-// Back to a StatelessWidget! So much cleaner.
 class DriverOtpPage extends StatelessWidget {
   const DriverOtpPage({super.key});
 
@@ -17,7 +17,7 @@ class DriverOtpPage extends StatelessWidget {
       actionButtons: [
         const CleanSlOtpInput(),
 
-        const SizedBox(height: 32),
+        SizedBox(height: Responsive.h(context, 32)),
 
         CleanSlButton(
           text: "Verify & Login",
@@ -32,34 +32,40 @@ class DriverOtpPage extends StatelessWidget {
                 ),
                 backgroundColor: AppTheme.accentColor,
                 behavior: SnackBarBehavior.floating,
-                margin: const EdgeInsets.only(bottom: 32, left: 48, right: 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                margin: EdgeInsets.only(
+                  bottom: Responsive.h(context, 32),
+                  left: Responsive.w(context, 48),
+                  right: Responsive.w(context, 48),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
                 duration: const Duration(seconds: 2),
               ),
             );
           },
         ),
 
-        const SizedBox(height: 24),
+        SizedBox(height: Responsive.h(context, 24)),
 
-        // Just ONE line of code for your complex timer!
         CleanSlResendTimer(
           onResend: () {
-            // This is where you actually tell the backend to send a new SMS
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text("New OTP sent!", textAlign: TextAlign.center),
                 backgroundColor: AppTheme.accentColor,
                 behavior: SnackBarBehavior.floating,
-                margin: const EdgeInsets.only(bottom: 32, left: 80, right: 80),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                margin: EdgeInsets.only(
+                  bottom: Responsive.h(context, 32),
+                  left: Responsive.w(context, 80),
+                  right: Responsive.w(context, 80),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
                 duration: const Duration(seconds: 1),
               ),
             );
           },
         ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: Responsive.h(context, 16)),
 
         CleanSlButton(
           text: "Change mobile number",

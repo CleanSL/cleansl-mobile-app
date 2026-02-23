@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-// Add this import!
-import '../../../../shared/widgets/cleansl_mobNum_input.dart'; 
+import '../../../../core/utils/responsive.dart';
+import '../../../../shared/widgets/cleansl_mobnum_input.dart';
 import '../../../../shared/widgets/cleansl_button.dart';
 import '../../../onboarding/presentation/widgets/auth_screen_template.dart';
 
@@ -13,11 +13,10 @@ class DriverLoginPage extends StatelessWidget {
       title: "Driver Access",
       subtitle: "Enter your registered mobile number. We'll send you an OTP to verify it's you.",
       actionButtons: [
-        
-        // 1. Mobile Number Input Field (Now just ONE line of code!)
+        // 1. Mobile Number Input Field
         const CleanSlMobNumInput(),
 
-        const SizedBox(height: 32),
+        SizedBox(height: Responsive.h(context, 32)),
 
         // 2. Send OTP Button
         CleanSlButton(
@@ -28,14 +27,10 @@ class DriverLoginPage extends StatelessWidget {
           },
         ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: Responsive.h(context, 16)),
 
         // 3. Back Button
-        CleanSlButton(
-          text: "Cancel",
-          variant: ButtonVariant.text,
-          onPressed: () => Navigator.pop(context), 
-        ),
+        CleanSlButton(text: "Cancel", variant: ButtonVariant.text, onPressed: () => Navigator.pop(context)),
       ],
     );
   }

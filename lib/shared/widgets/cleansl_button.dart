@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 // 1. Define all your possible button types here
 enum ButtonVariant { primary, secondary, outline, text }
@@ -17,7 +18,7 @@ class CleanSlButton extends StatelessWidget {
     required this.onPressed,
     this.variant = ButtonVariant.primary, // Defaults to primary if not specified
     this.width = double.infinity, // Defaults to full width
-    this.icon, 
+    this.icon,
   });
 
   @override
@@ -52,22 +53,21 @@ class CleanSlButton extends StatelessWidget {
         break;
     }
 
-    // 2. CONSTANT PADDING LOCKED IN
+    final double vPad = Responsive.h(context, 20);
+    final double hPad = Responsive.w(context, 24);
+    final double radius = Responsive.r(context, 30);
+    final double fontSize = Responsive.sp(context, 16);
+    final double iconHeight = Responsive.h(context, 32);
+
+    // 2. RESPONSIVE PADDING
     final buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: bgColor,
       foregroundColor: textColor,
       shadowColor: shadowColor,
       elevation: elevation,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24), // Constant padding for all buttons
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30),
-        side: borderSide, 
-      ),
-      textStyle: const TextStyle(
-        fontSize: 16, 
-        fontWeight: FontWeight.w600, 
-        fontFamily: 'Inter',
-      ),
+      padding: EdgeInsets.symmetric(vertical: vPad, horizontal: hPad),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: borderSide),
+      textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
     );
 
     return SizedBox(
@@ -75,16 +75,13 @@ class CleanSlButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: buttonStyle,
-        // 3. Force the inside content to always be exactly 32px tall (the size of your icon)
+        // 3. Force the inside content height to scale with the device
         child: SizedBox(
-          height: 32,
+          height: iconHeight,
           child: Row(
             mainAxisAlignment: icon != null ? MainAxisAlignment.start : MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[
-                icon!,
-                const SizedBox(width: 24), // The exact spacing between the Google icon and the text
-              ],
+              if (icon != null) ...[icon!, SizedBox(width: Responsive.w(context, 24))],
               Text(text),
             ],
           ),

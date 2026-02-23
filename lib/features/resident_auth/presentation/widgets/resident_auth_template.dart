@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/cleansl_branding.dart';
 
 class ResidentAuthTemplate extends StatelessWidget {
   final String title;
   final String subtitle;
   final List<Widget> formChildren; // The inputs and buttons that go inside the green card
+  final double? topSpacing;
 
   const ResidentAuthTemplate({
     super.key,
     required this.title,
     required this.subtitle,
     required this.formChildren,
+    this.topSpacing,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double logoPadTop = Responsive.h(context, AppTheme.space24);
+    final double titlePadH = Responsive.w(context, AppTheme.space24);
+    final double titleFontSize = Responsive.sp(context, 36);
+    final double subtitleFontSize = Responsive.sp(context, 14);
+    final double titleGap = Responsive.h(context, AppTheme.space16);
+    final double cardRadius = Responsive.r(context, 50);
+    final double cardPadTop = Responsive.h(context, AppTheme.space48);
+    final double cardPadH = Responsive.w(context, AppTheme.space32);
+    final double cardPadBottom = Responsive.h(context, AppTheme.space24);
+
     return Scaffold(
       backgroundColor: AppTheme.primaryBackground,
       body: CustomScrollView(
@@ -27,61 +40,54 @@ class ResidentAuthTemplate extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   // 1. Header (Fixed Logo)
-                  const Padding(
-                    padding: EdgeInsets.only(top: AppTheme.space24),
-                    child: CleanSlBranding(layout: BrandingLayout.horizontal),
+                  Padding(
+                    padding: EdgeInsets.only(top: logoPadTop),
+                    child: const CleanSlBranding(layout: BrandingLayout.horizontal),
                   ),
 
                   // 2. The Magic Spacer
                   const Spacer(),
-                  const SizedBox(height: AppTheme.space32),
 
                   // 3. Dynamic Titles
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.space24),
+                    padding: EdgeInsets.symmetric(horizontal: titlePadH),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                color: AppTheme.textColor, 
-                                fontSize: 36,
-                              ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.displayLarge?.copyWith(color: AppTheme.textColor, fontSize: titleFontSize),
                         ),
-                        const SizedBox(height: AppTheme.space16),
+                        SizedBox(height: titleGap),
                         Text(
                           subtitle,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.textColor.withValues(alpha: 0.8),
-                              ),
+                            color: AppTheme.textColor.withValues(alpha: 0.8),
+                            fontSize: subtitleFontSize,
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: AppTheme.space48),
+                  SizedBox(
+                    height: topSpacing != null
+                        ? Responsive.h(context, topSpacing!)
+                        : Responsive.h(context, AppTheme.space48),
+                  ),
 
                   // 4. The Green Form Card
                   Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppTheme.secondaryColor1,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(cardRadius)),
                     ),
-                    padding: const EdgeInsets.only(
-                      top: AppTheme.space48,
-                      left: AppTheme.space32,
-                      right: AppTheme.space32,
-                      bottom: AppTheme.space48,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      // We inject whatever inputs and buttons you pass in right here!
-                      children: formChildren, 
-                    ),
+                    padding: EdgeInsets.only(top: cardPadTop, left: cardPadH, right: cardPadH, bottom: cardPadBottom),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: formChildren),
                   ),
                 ],
               ),

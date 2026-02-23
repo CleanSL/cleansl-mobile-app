@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/cleansl_branding.dart';
 
 class AuthScreenTemplate extends StatelessWidget {
@@ -7,15 +8,19 @@ class AuthScreenTemplate extends StatelessWidget {
   final String subtitle;
   final List<Widget> actionButtons;
 
-  const AuthScreenTemplate({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.actionButtons,
-  });
+  const AuthScreenTemplate({super.key, required this.title, required this.subtitle, required this.actionButtons});
 
   @override
   Widget build(BuildContext context) {
+    final double cardRadius = Responsive.r(context, AppTheme.space48);
+    final double cardPadH = Responsive.w(context, AppTheme.space32);
+    final double cardPadV = Responsive.h(context, AppTheme.space32);
+    final double titleSize = Responsive.sp(context, 24);
+    final double subtitleSize = Responsive.sp(context, 14);
+    final double titleGap = Responsive.h(context, AppTheme.space8);
+    final double contentGap = Responsive.h(context, AppTheme.space32);
+    final double bottomSafe = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: CustomScrollView(
@@ -25,29 +30,24 @@ class AuthScreenTemplate extends StatelessWidget {
             child: Column(
               children: [
                 // 1. Top Section (Global Branding)
-                const Expanded(
-                  flex: 3,
-                  child: CleanSlBranding(),
-                ),
+                const Expanded(flex: 3, child: CleanSlBranding()),
 
                 // 2. Bottom Section (Curved Container)
                 Container(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppTheme.secondaryColor1,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(AppTheme.space48),
-                      topRight: Radius.circular(AppTheme.space48),
+                      topLeft: Radius.circular(cardRadius),
+                      topRight: Radius.circular(cardRadius),
                     ),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -5))
-                    ],
+                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -5))],
                   ),
                   padding: EdgeInsets.only(
-                    top: AppTheme.space32,
-                    left: AppTheme.space32,
-                    right: AppTheme.space32,
-                    bottom: AppTheme.space32 + MediaQuery.of(context).padding.bottom,
+                    top: cardPadV,
+                    left: cardPadH,
+                    right: cardPadH,
+                    bottom: cardPadV + bottomSafe,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,24 +55,25 @@ class AuthScreenTemplate extends StatelessWidget {
                       Text(
                         title,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppTheme.primaryBackground,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: AppTheme.primaryBackground,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w600,
+                        ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: AppTheme.space8),
+                      SizedBox(height: titleGap),
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.primaryBackground.withValues(alpha: 0.7),
-                            ),
+                          color: AppTheme.primaryBackground.withValues(alpha: 0.7),
+                          fontSize: subtitleSize,
+                        ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: AppTheme.space32),
-                      
+                      SizedBox(height: contentGap),
+
                       // Unpacks your list of buttons here
-                      ...actionButtons, 
+                      ...actionButtons,
                     ],
                   ),
                 ),

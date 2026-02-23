@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 class CleanSlResendTimer extends StatefulWidget {
   final VoidCallback onResend; // Allows the parent page to pass in what happens when tapped
@@ -46,14 +47,18 @@ class _CleanSlResendTimerState extends State<CleanSlResendTimer> {
 
   @override
   Widget build(BuildContext context) {
+    final double bodySize = Responsive.sp(context, 14);
+    final double labelSize = Responsive.sp(context, 16);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           _canResend ? "Didn't receive the code? " : "Resend code in ",
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.primaryBackground.withValues(alpha: 0.7),
-              ),
+            color: AppTheme.primaryBackground.withValues(alpha: 0.7),
+            fontSize: bodySize,
+          ),
         ),
         GestureDetector(
           onTap: _canResend
@@ -65,9 +70,10 @@ class _CleanSlResendTimerState extends State<CleanSlResendTimer> {
           child: Text(
             _canResend ? "Resend" : "${_secondsRemaining}s",
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: _canResend ? AppTheme.accentColor : AppTheme.primaryBackground,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: _canResend ? AppTheme.accentColor : AppTheme.primaryBackground,
+              fontWeight: FontWeight.bold,
+              fontSize: labelSize,
+            ),
           ),
         ),
       ],

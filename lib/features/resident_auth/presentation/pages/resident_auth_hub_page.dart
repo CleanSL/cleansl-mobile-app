@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/cleansl_button.dart';
 import '../../../onboarding/presentation/widgets/auth_screen_template.dart';
 
@@ -16,23 +17,21 @@ class ResidentAuthHubPage extends StatelessWidget {
           text: "Log In",
           variant: ButtonVariant.primary,
           onPressed: () {
-            // Navigate to the Resident Login form
             Navigator.pushNamed(context, '/resident-login');
           },
         ),
 
-        const SizedBox(height: 16), // Spacing between buttons
+        SizedBox(height: Responsive.h(context, 16)),
         // 2. Create Account Button
         CleanSlButton(
           text: "Create an Account",
-          variant: ButtonVariant.secondary, // Uses the outlined/secondary style
+          variant: ButtonVariant.secondary,
           onPressed: () {
-            // Navigate to the Resident Sign-Up form
             Navigator.pushNamed(context, '/resident-signup');
           },
         ),
 
-        const SizedBox(height: 24), // A bit more space before the cancel button
+        SizedBox(height: Responsive.h(context, 24)),
         // 3. Go Back / Cancel Button
         CleanSlButton(
           text: "Back to Role Selection",

@@ -21,8 +21,8 @@ class ResidentAuthTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     final double logoPadTop = Responsive.h(context, AppTheme.space24);
     final double titlePadH = Responsive.w(context, AppTheme.space24);
-    final double titleFontSize = Responsive.sp(context, 36);
-    final double subtitleFontSize = Responsive.sp(context, 14);
+    final double titleFontSize = Responsive.sp(context, 32);
+    final double subtitleFontSize = Responsive.sp(context, 12);
     final double titleGap = Responsive.h(context, AppTheme.space16);
     final double cardRadius = Responsive.r(context, 50);
     final double cardPadTop = Responsive.h(context, AppTheme.space48);

@@ -19,7 +19,7 @@ class CleanSlTextInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double hPad = Responsive.w(context, AppTheme.space24);
-    final double vPad = Responsive.h(context, 20);
+    final double vPad = Responsive.h(context, 16);
     final double radius = Responsive.r(context, 30);
 
     return TextField(

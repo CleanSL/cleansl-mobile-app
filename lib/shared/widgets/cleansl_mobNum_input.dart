@@ -10,7 +10,7 @@ class CleanSlMobNumInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double hPad = Responsive.w(context, AppTheme.space24);
-    final double vPad = Responsive.h(context, 20);
+    final double vPad = Responsive.h(context, 16);
     final double radius = Responsive.r(context, 30);
     final double iconSize = Responsive.w(context, 24);
 
@@ -25,7 +25,7 @@ class CleanSlMobNumInput extends StatelessWidget {
       decoration: InputDecoration(
         hintText: "77 123 4567",
         prefixIcon: Padding(
-          padding: EdgeInsets.only(left: Responsive.w(context, 12), right: Responsive.w(context, 8)),
+          padding: EdgeInsets.only(left: Responsive.w(context, 24), right: Responsive.w(context, 8)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -45,7 +45,7 @@ class CleanSlMobNumInput extends StatelessWidget {
                 width: 1,
                 color: AppTheme.secondaryColor1.withValues(alpha: 0.2),
               ),
-              SizedBox(width: Responsive.w(context, 8)),
+              SizedBox(width: Responsive.w(context, 0)),
             ],
           ),
         ),

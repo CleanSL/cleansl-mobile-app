@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 1. Import Supabase
+
 // Import custom theme file
 import 'core/theme/app_theme.dart';
 // Import feature pages
@@ -10,11 +12,23 @@ import 'features/resident_auth/presentation/pages/resident_auth_hub_page.dart';
 import 'features/resident_auth/presentation/pages/resident_login_page.dart';
 import 'features/resident_auth/presentation/pages/resident_signup_page.dart';
 
-void main() {
+// 2. Change main to be an asynchronous function
+Future<void> main() async {
   // Ensure Flutter bindings are initialized before running the app
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 3. Initialize Supabase
+  // You can find these keys in your Supabase Dashboard under Project Settings -> API
+  await Supabase.initialize(
+    url: 'https://stpfrtvhfwlpdlmgmhbo.supabase.co',
+    anonKey: 'sb_publishable_ChBz3flKPHZRVL0jR2mQqg_e6FrkAYM',
+  );
+
   runApp(const SmartResidentApp());
 }
+
+// 4. Create a global variable for easy access to the client throughout your app
+final supabase = Supabase.instance.client;
 
 class SmartResidentApp extends StatelessWidget {
   const SmartResidentApp({super.key});
@@ -39,9 +53,9 @@ class SmartResidentApp extends StatelessWidget {
         '/role': (context) => const RoleSelectionPage(),
         '/driver-login': (context) => const DriverLoginPage(),
         '/driver-otp': (context) => const DriverOtpPage(),
-        '/resident-auth-hub': (context) => const ResidentAuthHubPage(), // This is the hub where residents choose to log in or sign up
-        '/resident-login': (context) => const ResidentLoginPage(), // Placeholder for the actual login page
-        '/resident-signup': (context) => const ResidentSignUpPage(), // Placeholder for the actual sign-up page
+        '/resident-auth-hub': (context) => const ResidentAuthHubPage(), 
+        '/resident-login': (context) => const ResidentLoginPage(), 
+        '/resident-signup': (context) => const ResidentSignUpPage(), 
       },
     );
   }

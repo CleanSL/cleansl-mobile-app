@@ -53,7 +53,7 @@ class CleanSlButton extends StatelessWidget {
         break;
     }
 
-    final double vPad = Responsive.h(context, 20);
+    final double vPad = Responsive.h(context, 16);
     final double hPad = Responsive.w(context, 24);
     final double radius = Responsive.r(context, 30);
     final double fontSize = Responsive.sp(context, 16);

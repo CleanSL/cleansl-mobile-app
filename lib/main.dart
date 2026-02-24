@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 1. Import Supabase
+import 'package:flutter_dotenv/flutter_dotenv.dart'; //  Import dotenv
 
 // Import custom theme file
 import 'core/theme/app_theme.dart';
@@ -14,14 +15,15 @@ import 'features/resident_auth/presentation/pages/resident_signup_page.dart';
 
 // 2. Change main to be an asynchronous function
 Future<void> main() async {
-  // Ensure Flutter bindings are initialized before running the app
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 3. Initialize Supabase
-  // You can find these keys in your Supabase Dashboard under Project Settings -> API
+  // 2. Load the .env file
+  await dotenv.load(fileName: ".env");
+  
+  // 3. Initialize Supabase using the hidden variables
   await Supabase.initialize(
-    url: 'https://stpfrtvhfwlpdlmgmhbo.supabase.co',
-    anonKey: 'sb_publishable_ChBz3flKPHZRVL0jR2mQqg_e6FrkAYM',
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
   runApp(const SmartResidentApp());

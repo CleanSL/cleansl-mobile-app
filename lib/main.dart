@@ -5,13 +5,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; //  Import dotenv
 // Import custom theme file
 import 'core/theme/app_theme.dart';
 // Import feature pages
-import 'features/onboarding/presentation/pages/language_selection_page.dart';
-import 'features/onboarding/presentation/pages/role_selection_page.dart';
-import 'features/driver_auth/presentation/pages/driver_login_page.dart';
-import 'features/driver_auth/presentation/pages/driver_otp_page.dart';
-import 'features/resident_auth/presentation/pages/resident_auth_hub_page.dart';
-import 'features/resident_auth/presentation/pages/resident_login_page.dart';
-import 'features/resident_auth/presentation/pages/resident_signup_page.dart';
+import 'features/common/onboarding/presentation/pages/language_selection_page.dart';
+import 'features/common/onboarding/presentation/pages/role_selection_page.dart';
+import 'features/driver/driver_auth/presentation/pages/driver_login_page.dart';
+import 'features/driver/driver_auth/presentation/pages/driver_otp_page.dart';
+import 'features/resident/resident_auth/presentation/pages/resident_auth_hub_page.dart';
+import 'features/resident/resident_auth/presentation/pages/resident_login_page.dart';
+import 'features/resident/resident_auth/presentation/pages/resident_signup_page.dart';
 
 // 2. Change main to be an asynchronous function
 Future<void> main() async {

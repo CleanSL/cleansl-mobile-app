@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/responsive.dart';
-import '../../../../shared/widgets/cleansl_button.dart';
-import '../../../../shared/widgets/cleansl_text_input.dart';
-import '../../../../shared/widgets/cleansl_mobnum_input.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/responsive.dart';
+import '../../../../../shared/widgets/cleansl_button.dart';
+import '../../../../../shared/widgets/cleansl_text_input.dart';
+import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
 import '../widgets/resident_auth_template.dart';
 
 class ResidentSignUpPage extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/utils/responsive.dart';
-import '../../../../shared/widgets/cleansl_button.dart';
+import '../../../../../core/utils/responsive.dart';
+import '../../../../../shared/widgets/cleansl_button.dart';
 import '../widgets/auth_screen_template.dart';
 
 class RoleSelectionPage extends StatelessWidget {

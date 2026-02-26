@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/responsive.dart';
-import '../../../../shared/widgets/cleansl_button.dart';
-import '../../../../shared/widgets/cleansl_otp_input.dart';
-import '../../../../shared/widgets/cleansl_resend_timer.dart';
-import '../../../onboarding/presentation/widgets/auth_screen_template.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/responsive.dart';
+import '../../../../../shared/widgets/cleansl_button.dart';
+import '../../../../../shared/widgets/cleansl_otp_input.dart';
+import '../../../../../shared/widgets/cleansl_resend_timer.dart';
+import '../../../../common/onboarding/presentation/widgets/auth_screen_template.dart';
 
 class DriverOtpPage extends StatelessWidget {
   const DriverOtpPage({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/utils/responsive.dart';
-import '../../../../shared/widgets/cleansl_button.dart';
-import '../../../onboarding/presentation/widgets/auth_screen_template.dart';
+import '../../../../../core/utils/responsive.dart';
+import '../../../../../shared/widgets/cleansl_button.dart';
+import '../../../../common/onboarding/presentation/widgets/auth_screen_template.dart';
 
 class ResidentAuthHubPage extends StatelessWidget {
   const ResidentAuthHubPage({super.key});

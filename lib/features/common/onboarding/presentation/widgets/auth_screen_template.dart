@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/responsive.dart';
-import '../../../../shared/widgets/cleansl_branding.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/responsive.dart';
+import '../../../../../shared/widgets/cleansl_branding.dart';
 
 class AuthScreenTemplate extends StatelessWidget {
   final String title;

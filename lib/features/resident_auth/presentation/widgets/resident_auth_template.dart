@@ -29,9 +29,13 @@ class ResidentAuthTemplate extends StatelessWidget {
     final double cardPadH = Responsive.w(context, AppTheme.space32);
     final double cardPadBottom = Responsive.h(context, AppTheme.space24);
 
+    final double bottomSafe = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       backgroundColor: AppTheme.primaryBackground,
+      resizeToAvoidBottomInset: true,
       body: CustomScrollView(
+        physics: const ClampingScrollPhysics(),
         slivers: [
           SliverFillRemaining(
             hasScrollBody: false,
@@ -86,7 +90,12 @@ class ResidentAuthTemplate extends StatelessWidget {
                       color: AppTheme.secondaryColor1,
                       borderRadius: BorderRadius.vertical(top: Radius.circular(cardRadius)),
                     ),
-                    padding: EdgeInsets.only(top: cardPadTop, left: cardPadH, right: cardPadH, bottom: cardPadBottom),
+                    padding: EdgeInsets.only(
+                      top: cardPadTop,
+                      left: cardPadH,
+                      right: cardPadH,
+                      bottom: cardPadBottom + bottomSafe,
+                    ),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: formChildren),
                   ),
                 ],

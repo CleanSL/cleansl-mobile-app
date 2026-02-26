@@ -23,64 +23,68 @@ class AuthScreenTemplate extends StatelessWidget {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: CustomScrollView(
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              children: [
-                // 1. Top Section (Global Branding)
-                const Expanded(flex: 3, child: CleanSlBranding()),
+      body: SafeArea(
+        bottom: false, // We handle bottom padding manually via bottomSafe
+        child: CustomScrollView(
+          physics: const ClampingScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                children: [
+                  // 1. Top Section (Global Branding)
+                  const Expanded(flex: 3, child: CleanSlBranding()),
 
-                // 2. Bottom Section (Curved Container)
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor1,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(cardRadius),
-                      topRight: Radius.circular(cardRadius),
+                  // 2. Bottom Section (Curved Container)
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryColor1,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(cardRadius),
+                        topRight: Radius.circular(cardRadius),
+                      ),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -5))],
                     ),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -5))],
-                  ),
-                  padding: EdgeInsets.only(
-                    top: cardPadV,
-                    left: cardPadH,
-                    right: cardPadH,
-                    bottom: cardPadV + bottomSafe,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppTheme.primaryBackground,
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w600,
+                    padding: EdgeInsets.only(
+                      top: cardPadV,
+                      left: cardPadH,
+                      right: cardPadH,
+                      bottom: cardPadV + bottomSafe,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: AppTheme.primaryBackground,
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: titleGap),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.primaryBackground.withValues(alpha: 0.7),
-                          fontSize: subtitleSize,
+                        SizedBox(height: titleGap),
+                        Text(
+                          subtitle,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.primaryBackground.withValues(alpha: 0.7),
+                            fontSize: subtitleSize,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: contentGap),
+                        SizedBox(height: contentGap),
 
-                      // Unpacks your list of buttons here
-                      ...actionButtons,
-                    ],
+                        // Unpacks your list of buttons here
+                        ...actionButtons,
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

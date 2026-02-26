@@ -12,6 +12,7 @@ import 'features/driver/driver_auth/presentation/pages/driver_otp_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_auth_hub_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_login_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_signup_page.dart';
+import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dart';
 
 // 2. Change main to be an asynchronous function
 Future<void> main() async {
@@ -57,7 +58,8 @@ class SmartResidentApp extends StatelessWidget {
         '/driver-otp': (context) => const DriverOtpPage(),
         '/resident-auth-hub': (context) => const ResidentAuthHubPage(), 
         '/resident-login': (context) => const ResidentLoginPage(), 
-        '/resident-signup': (context) => const ResidentSignUpPage(), 
+        '/resident-signup': (context) => const ResidentSignUpPage(),
+        '/resident-main': (context) => const ResidentMainNavPage(),
       },
     );
   }

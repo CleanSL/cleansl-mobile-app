@@ -50,7 +50,13 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
 
         SizedBox(height: gap),
 
-        CleanSlButton(text: "Sign In", variant: ButtonVariant.primary, onPressed: () {}),
+        CleanSlButton(
+          text: "Sign In",
+          variant: ButtonVariant.primary,
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/resident-main');
+          },
+        ),
 
         SizedBox(height: gap),
 

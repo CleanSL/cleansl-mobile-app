@@ -5,6 +5,7 @@ import '../../../../../shared/widgets/cleansl_button.dart';
 import '../../../../../shared/widgets/cleansl_text_input.dart';
 import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
 import '../widgets/resident_auth_template.dart';
+import '../../../../../core/services/auth_service.dart';
 
 class ResidentSignUpPage extends StatefulWidget {
   const ResidentSignUpPage({super.key});
@@ -14,7 +15,27 @@ class ResidentSignUpPage extends StatefulWidget {
 }
 
 class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
+  // 2. Initialized the service, loading state, and all controllers
+  final AuthService _authService = AuthService();
   bool _agreedToTerms = false;
+  bool _isLoading = false;
+
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Always dispose controllers to prevent memory leaks
+    _fullNameController.dispose();
+    _mobileController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,18 +46,23 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
 
     return ResidentAuthTemplate(
       title: "Get Started",
-      subtitle: "Please enter your details to create an new account.",
+      subtitle: "Please enter your details to create a new account.",
       topSpacing: AppTheme.space16,
       formChildren: [
-        const CleanSlTextInput(hintText: "Full Name"),
+        // 3. Attached the controllers to your inputs!
+        CleanSlTextInput(hintText: "Full Name", controller: _fullNameController),
         SizedBox(height: fieldGap),
-        const CleanSlMobNumInput(),
+        
+        CleanSlMobNumInput(controller: _mobileController),
         SizedBox(height: fieldGap),
-        const CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress),
+        
+        CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController),
         SizedBox(height: fieldGap),
-        const CleanSlTextInput(hintText: "Create Password", isPassword: true),
+        
+        CleanSlTextInput(hintText: "Create Password", isPassword: true, controller: _passwordController),
         SizedBox(height: fieldGap),
-        const CleanSlTextInput(hintText: "Confirm Password", isPassword: true),
+        
+        CleanSlTextInput(hintText: "Confirm Password", isPassword: true, controller: _confirmPasswordController),
 
         SizedBox(height: fieldGap),
 
@@ -93,13 +119,48 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
 
         SizedBox(height: sectionGap),
 
-        CleanSlButton(
-          text: "Sign Up",
-          variant: ButtonVariant.primary,
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/resident-main');
-          },
-        ),
+        // 4. Fixed the onPressed syntax and added the loading spinner
+        _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.accentColor))
+            : CleanSlButton(
+                text: "Sign Up",
+                variant: ButtonVariant.primary,
+                onPressed: () async { // <-- Fixed async syntax here
+                  // Basic Validation
+                  if (!_agreedToTerms) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please agree to the Terms & Conditions.")));
+                    return;
+                  }
+                  if (_passwordController.text != _confirmPasswordController.text) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match.")));
+                    return;
+                  }
+
+                  setState(() => _isLoading = true);
+
+                  try {
+                    await _authService.signUpResident(
+                      fullName: _fullNameController.text.trim(),
+                      mobile: _mobileController.text.trim(),
+                      email: _emailController.text.trim(),
+                      password: _passwordController.text.trim(),
+                    );
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account created successfully!")));
+                      Navigator.pushReplacementNamed(context, '/resident-login');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                    }
+                  }
+                },
+              ),
 
         SizedBox(height: smallGap),
 

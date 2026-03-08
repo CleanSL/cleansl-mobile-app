@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 
@@ -16,7 +17,12 @@ class CleanSlMobNumInput extends StatelessWidget {
 
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.phone,
+      keyboardType: TextInputType.number,
+      maxLength: 9,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(9),
+      ],
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
         color: AppTheme.textColor,
         fontWeight: FontWeight.w400,
@@ -24,12 +30,20 @@ class CleanSlMobNumInput extends StatelessWidget {
       ),
       decoration: InputDecoration(
         hintText: "77 123 4567",
+        counterText: "",
         prefixIcon: Padding(
-          padding: EdgeInsets.only(left: Responsive.w(context, 24), right: Responsive.w(context, 8)),
+          padding: EdgeInsets.only(
+            left: Responsive.w(context, 24),
+            right: Responsive.w(context, 8),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.phone_android_rounded, color: AppTheme.accentColor, size: iconSize),
+              Icon(
+                Icons.phone_android_rounded,
+                color: AppTheme.accentColor,
+                size: iconSize,
+              ),
               SizedBox(width: Responsive.w(context, 8)),
               Text(
                 "+94",
@@ -52,9 +66,18 @@ class CleanSlMobNumInput extends StatelessWidget {
         filled: true,
         fillColor: AppTheme.primaryBackground,
         contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }

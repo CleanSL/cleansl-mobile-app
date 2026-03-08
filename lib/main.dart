@@ -13,6 +13,9 @@ import 'features/driver/driver_auth/presentation/pages/driver_otp_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_auth_hub_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_login_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_signup_page.dart';
+import 'features/resident/resident_auth/presentation/pages/forgot_password_page.dart';
+import 'features/resident/resident_auth/presentation/pages/forgot_password_verify_page.dart';
+import 'features/resident/resident_auth/presentation/pages/reset_password_page.dart';
 import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dart';
 
 // 2. Change main to be an asynchronous function
@@ -27,19 +30,28 @@ Future<void> main() async {
     await dotenv.load(fileName: ".env");
 
     // 3. Initialize Supabase using the hidden variables
-    await Supabase.initialize(url: dotenv.env['SUPABASE_URL'] ?? '', anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '');
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    );
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
 
-  runApp(const SmartResidentApp());
+  // Determine the start route based on existing session
+  final session = Supabase.instance.client.auth.currentSession;
+  final String startRoute = session != null ? '/resident-main' : '/language';
+
+  runApp(SmartResidentApp(initialRoute: startRoute));
 }
 
 // 4. Create a global variable for easy access to the client throughout your app
 final supabase = Supabase.instance.client;
 
 class SmartResidentApp extends StatelessWidget {
-  const SmartResidentApp({super.key});
+  final String initialRoute;
+
+  const SmartResidentApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +64,8 @@ class SmartResidentApp extends StatelessWidget {
       // Using your custom brand guidelines from app_theme.dart
       theme: AppTheme.lightTheme,
 
-      // Setting the initial flow: Language -> Role -> Specific Auth
-      initialRoute: '/language',
+      // Auto-login: use the determined initial route
+      initialRoute: initialRoute,
 
       // Define the routes for navigation
       routes: {
@@ -65,6 +77,10 @@ class SmartResidentApp extends StatelessWidget {
         '/resident-login': (context) => const ResidentLoginPage(),
         '/resident-signup': (context) => const ResidentSignUpPage(),
         '/resident-main': (context) => const ResidentMainNavPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/forgot-password-verify': (context) =>
+            const ForgotPasswordVerifyPage(),
+        '/reset-password': (context) => const ResetPasswordPage(),
       },
     );
   }

@@ -47,11 +47,9 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
       topSpacing: AppTheme.space16,
       formChildren: [
         // 🟢 CHANGED: Removed 'const' and added your controllers to his inputs
-        _isEmailMode
-            ? CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController)
-            : CleanSlMobNumInput(controller: _mobileController),
+        _isEmailMode ? CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController) : CleanSlMobNumInput(controller: _mobileController),
         SizedBox(height: gap),
-        
+
         CleanSlTextInput(hintText: "Password", isPassword: true, controller: _passwordController),
 
         SizedBox(height: gap),
@@ -59,12 +57,10 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
         Align(
           alignment: Alignment.centerRight,
           child: GestureDetector(
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/forgot-password'),
             child: Text(
               "Forgot Password?",
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor, fontSize: Responsive.sp(context, 16)),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor, fontSize: Responsive.sp(context, 16)),
             ),
           ),
         ),
@@ -87,20 +83,31 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
                     return;
                   }
 
+                  if (_isEmailMode && !RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(identifier)) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid email address")));
+                    return;
+                  }
+
+                  if (!_isEmailMode && identifier.length != 9) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid 9-digit mobile number")));
+                    return;
+                  }
+
                   setState(() => _isLoading = true);
 
                   try {
                     // Right now, Supabase expects an email to log in
-                    await _authService.signInResident(
-                      identifier: identifier,
-                      password: password,
-                    );
-                    
+                    await _authService.signInResident(identifier: identifier, password: password);
+
                     // If Supabase says the password is correct, go to the main app!
-                    if (mounted) Navigator.pushReplacementNamed(context, '/resident-main');
+                    if (context.mounted) {
+                      Navigator.pushReplacementNamed(context, '/resident-main');
+                    }
                   } catch (e) {
                     // Show error if password is wrong or user doesn't exist
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
                   } finally {
                     if (mounted) setState(() => _isLoading = false);
                   }
@@ -125,11 +132,7 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
         CleanSlButton(
           text: "Continue with Google",
           variant: ButtonVariant.secondary,
-          icon: SvgPicture.asset(
-            'assets/icons/google_logo.svg',
-            height: Responsive.h(context, 32),
-            width: Responsive.w(context, 32),
-          ),
+          icon: SvgPicture.asset('assets/icons/google_logo.svg', height: Responsive.h(context, 32), width: Responsive.w(context, 32)),
           onPressed: () {},
         ),
 
@@ -155,18 +158,13 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
           children: [
             Text(
               "Don't have an account? ",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.primaryBackground.withValues(alpha: 0.8),
-                fontSize: Responsive.sp(context, 14),
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.8), fontSize: Responsive.sp(context, 14)),
             ),
             GestureDetector(
               onTap: () => Navigator.pushReplacementNamed(context, '/resident-signup'),
               child: Text(
                 "Sign Up",
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor, fontSize: Responsive.sp(context, 16)),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor, fontSize: Responsive.sp(context, 16)),
               ),
             ),
           ],

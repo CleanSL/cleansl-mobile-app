@@ -3,8 +3,30 @@ import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 
-class CleanSlOtpInput extends StatelessWidget {
-  const CleanSlOtpInput({super.key});
+class CleanSlOtpInput extends StatefulWidget {
+  final ValueChanged<String>? onChanged;
+
+  const CleanSlOtpInput({super.key, this.onChanged});
+
+  @override
+  State<CleanSlOtpInput> createState() => _CleanSlOtpInputState();
+}
+
+class _CleanSlOtpInputState extends State<CleanSlOtpInput> {
+  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _notifyOtpChanged() {
+    final otp = _controllers.map((c) => c.text).join();
+    widget.onChanged?.call(otp);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +42,7 @@ class CleanSlOtpInput extends StatelessWidget {
           width: boxSize,
           height: boxSize,
           child: TextField(
+            controller: _controllers[index],
             autofocus: index == 0, // Automatically focuses the first box
             textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
@@ -35,6 +58,7 @@ class CleanSlOtpInput extends StatelessWidget {
               if (value.isEmpty && index > 0) {
                 FocusScope.of(context).previousFocus();
               }
+              _notifyOtpChanged();
             },
             decoration: InputDecoration(
               filled: true,

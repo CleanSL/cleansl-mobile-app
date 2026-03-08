@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 1. Import Supabase
 import 'package:flutter_dotenv/flutter_dotenv.dart'; //  Import dotenv
 
@@ -17,15 +18,19 @@ import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dar
 // 2. Change main to be an asynchronous function
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 2. Load the .env file
-  await dotenv.load(fileName: ".env");
-  
-  // 3. Initialize Supabase using the hidden variables
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL'] ?? '',
-    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-  );
+
+  // Allow google_fonts to gracefully fall back to default fonts when offline
+  GoogleFonts.config.allowRuntimeFetching = true;
+
+  try {
+    // 2. Load the .env file
+    await dotenv.load(fileName: ".env");
+
+    // 3. Initialize Supabase using the hidden variables
+    await Supabase.initialize(url: dotenv.env['SUPABASE_URL'] ?? '', anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '');
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
 
   runApp(const SmartResidentApp());
 }
@@ -56,8 +61,8 @@ class SmartResidentApp extends StatelessWidget {
         '/role': (context) => const RoleSelectionPage(),
         '/driver-login': (context) => const DriverLoginPage(),
         '/driver-otp': (context) => const DriverOtpPage(),
-        '/resident-auth-hub': (context) => const ResidentAuthHubPage(), 
-        '/resident-login': (context) => const ResidentLoginPage(), 
+        '/resident-auth-hub': (context) => const ResidentAuthHubPage(),
+        '/resident-login': (context) => const ResidentLoginPage(),
         '/resident-signup': (context) => const ResidentSignUpPage(),
         '/resident-main': (context) => const ResidentMainNavPage(),
       },

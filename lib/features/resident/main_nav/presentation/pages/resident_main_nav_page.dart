@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../../../home/presentation/pages/resident_home_page.dart';
 
 class ResidentMainNavPage extends StatefulWidget {
   const ResidentMainNavPage({super.key});
@@ -13,11 +14,11 @@ class _ResidentMainNavPageState extends State<ResidentMainNavPage> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const Center(child: Text("Resident Home Dashboard Placeholder")),
-    const Center(child: Text("Schedule & Calendar Placeholder")),
-    const Center(child: Text("ML Complaint Scanner Placeholder")),
-    const Center(child: Text("Resident Profile Placeholder")),
-  ];
+  const ResidentHomePage(),
+  const Center(child: Text("Schedule & Calendar Placeholder")),
+  const Center(child: Text("ML Complaint Scanner Placeholder")),
+  const Center(child: Text("Resident Profile Placeholder")),
+];
 
   // 1. Define your icons and labels in simple lists
   final List<IconData> _icons = [

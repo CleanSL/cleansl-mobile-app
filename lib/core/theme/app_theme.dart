@@ -22,7 +22,13 @@ class AppTheme {
   // 3. Global Theme Definition
   static ThemeData get lightTheme {
     // Base TextTheme using Inter for the body
-    TextTheme baseTextTheme = GoogleFonts.interTextTheme();
+    // Use a try-catch to gracefully handle font loading failures (e.g., no internet)
+    TextTheme baseTextTheme;
+    try {
+      baseTextTheme = GoogleFonts.interTextTheme();
+    } catch (_) {
+      baseTextTheme = const TextTheme();
+    }
 
     return ThemeData(
       useMaterial3: true,
@@ -47,10 +53,7 @@ class AppTheme {
       ),
 
       // Iconography Defaults
-      iconTheme: const IconThemeData(
-        color: secondaryColor1,
-        size: 24,
-      ),
+      iconTheme: const IconThemeData(color: secondaryColor1, size: 24),
 
       // Component Styling: Cards (16px radius + Soft Shadow)
       cardTheme: CardThemeData(

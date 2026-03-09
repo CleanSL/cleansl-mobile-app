@@ -1,8 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+// To grab your Web Client ID securely
 
 class AuthService {
   // The global Supabase connection
   final _supabase = Supabase.instance.client;
+
+  // ==========================================
+  // RESIDENT AUTHENTICATION (EMAIL/MOBILE)
+  // ==========================================
 
   /// Signs up a new resident and saves their profile details
   Future<void> signUpResident({
@@ -78,6 +85,76 @@ class AuthService {
       }
       // If it's a different error (like rate limiting), show the default message
       throw Exception(e.message);
+    }
+  }
+// ==========================================
+  // GOOGLE AUTHENTICATION (v7.2.0 COMPLIANT)
+  // ==========================================
+
+  /// Triggers the native Google Sign-In and passes the token to Supabase
+  Future<void> signInWithGoogle() async {
+    // 1. Grab your Web Client ID from the hidden .env file
+    final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+    
+    if (webClientId == null) {
+      throw Exception('Missing GOOGLE_WEB_CLIENT_ID in .env file');
+    }
+
+    // 2. Initialize the v7 Singleton
+    final GoogleSignIn googleSignIn = GoogleSignIn.instance;
+    await googleSignIn.initialize(
+      clientId: webClientId,       
+      serverClientId: webClientId, 
+    );
+
+    // 3. NEW v7 LOGIC: Define what permissions we need to get the Access Token
+    final scopes = ['email', 'profile'];
+
+    // 4. Trigger the bottom sheet for the user to select their Gmail account
+    await googleSignIn.signOut();
+    final googleUser = await googleSignIn.authenticate(scopeHint: scopes);
+
+    // 5. NEW v7 LOGIC: Fetch the Access Token using the new Authorization Client
+    final authorization = await googleUser.authorizationClient.authorizationForScopes(scopes) ?? 
+                          await googleUser.authorizationClient.authorizeScopes(scopes);
+
+    // 6. Gather the two tokens from their new, completely separate locations
+    final idToken = googleUser.authentication.idToken;
+    final accessToken = authorization.accessToken;
+
+    if (idToken == null || accessToken == null) {
+      throw Exception('Failed to get secure tokens from Google.');
+    }
+
+    // 7. Hand the tokens to Supabase to verify and log the user in!
+    await _supabase.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: accessToken,
+    );
+  }
+  // ==========================================
+  // DRIVER AUTHENTICATION (OTP FLOW)
+  // ==========================================
+
+  /// 1. Sends the OTP to the driver's phone
+  Future<void> sendDriverOTP({required String mobile}) async {
+    // Append the Sri Lanka country code automatically
+    final formattedNumber = '+94$mobile';
+    await _supabase.auth.signInWithOtp(phone: formattedNumber);
+  }
+
+  /// 2. Verifies the code the driver typed in
+  Future<void> verifyDriverOTP({required String mobile, required String token}) async {
+    final formattedNumber = '+94$mobile';
+    final AuthResponse response = await _supabase.auth.verifyOTP(
+      phone: formattedNumber,
+      token: token,
+      type: OtpType.sms,
+    );
+    
+    if (response.user == null) {
+      throw Exception("Verification failed. Please try again.");
     }
   }
 }

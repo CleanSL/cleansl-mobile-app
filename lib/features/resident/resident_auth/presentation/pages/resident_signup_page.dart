@@ -26,6 +26,46 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
+  // Password complexity rules
+  bool get _passwordIsValid {
+    final pw = _passwordController.text;
+    if (pw.length < 8) return false;
+    if (!pw.contains(RegExp(r'[A-Z]'))) return false;
+    if (!pw.contains(RegExp(r'[a-z]'))) return false;
+    if (!pw.contains(RegExp(r'[0-9]'))) return false;
+    if (!pw.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) return false;
+    return true;
+  }
+
+  bool get _passwordsMatch => _passwordController.text == _confirmPasswordController.text && _confirmPasswordController.text.isNotEmpty;
+
+  bool get _isFullNameValid {
+    final name = _fullNameController.text.trim();
+    if (name.isEmpty) return false;
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(name)) return false;
+    return true;
+  }
+
+  bool get _isEmailValid {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) return false;
+    return RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(email);
+  }
+
+  bool get _isMobileValid => _mobileController.text.trim().length == 9;
+
+  bool get _canSubmit => _isFullNameValid && _isMobileValid && _isEmailValid && _passwordIsValid && _passwordsMatch && _agreedToTerms;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullNameController.addListener(() => setState(() {}));
+    _mobileController.addListener(() => setState(() {}));
+    _emailController.addListener(() => setState(() {}));
+    _passwordController.addListener(() => setState(() {}));
+    _confirmPasswordController.addListener(() => setState(() {}));
+  }
+
   @override
   void dispose() {
     // Always dispose controllers to prevent memory leaks
@@ -52,16 +92,16 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
         // 3. Attached the controllers to your inputs!
         CleanSlTextInput(hintText: "Full Name", controller: _fullNameController),
         SizedBox(height: fieldGap),
-        
+
         CleanSlMobNumInput(controller: _mobileController),
         SizedBox(height: fieldGap),
-        
+
         CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController),
         SizedBox(height: fieldGap),
-        
+
         CleanSlTextInput(hintText: "Create Password", isPassword: true, controller: _passwordController),
         SizedBox(height: fieldGap),
-        
+
         CleanSlTextInput(hintText: "Confirm Password", isPassword: true, controller: _confirmPasswordController),
 
         SizedBox(height: fieldGap),
@@ -96,18 +136,11 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
                 child: Text.rich(
                   TextSpan(
                     text: "I agree to the ",
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.primaryBackground.withValues(alpha: 0.8),
-                      fontSize: Responsive.sp(context, 12),
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.8), fontSize: Responsive.sp(context, 12)),
                     children: [
                       TextSpan(
                         text: "Terms & Conditions",
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.accentColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: Responsive.sp(context, 12),
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.w600, fontSize: Responsive.sp(context, 12)),
                       ),
                     ],
                   ),
@@ -117,49 +150,109 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
           ],
         ),
 
+        // Password rules hint
+        if (_passwordController.text.isNotEmpty && !_passwordIsValid)
+          Padding(
+            padding: EdgeInsets.only(top: Responsive.h(context, 8), bottom: Responsive.h(context, 8)),
+            child: Text(
+              "Password must be at least 8 characters with uppercase, lowercase, number, and special character.",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.6), fontSize: Responsive.sp(context, 11)),
+            ),
+          ),
+
+        if (_confirmPasswordController.text.isNotEmpty && !_passwordsMatch)
+          Padding(
+            padding: EdgeInsets.only(top: Responsive.h(context, 8), bottom: Responsive.h(context, 8)),
+            child: Text(
+              "Passwords do not match.",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.redAccent.shade100, fontSize: Responsive.sp(context, 11)),
+            ),
+          ),
+
         SizedBox(height: sectionGap),
 
-        // 4. Fixed the onPressed syntax and added the loading spinner
         _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.accentColor))
             : CleanSlButton(
                 text: "Sign Up",
                 variant: ButtonVariant.primary,
-                onPressed: () async { // <-- Fixed async syntax here
-                  // Basic Validation
-                  if (!_agreedToTerms) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please agree to the Terms & Conditions.")));
-                    return;
-                  }
-                  if (_passwordController.text != _confirmPasswordController.text) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match.")));
-                    return;
-                  }
+                onPressed: _canSubmit
+                    ? () async {
+                        setState(() => _isLoading = true);
 
-                  setState(() => _isLoading = true);
+                        try {
+                          await _authService.signUpResident(
+                            fullName: _fullNameController.text.trim(),
+                            mobile: _mobileController.text.trim(),
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text.trim(),
+                          );
 
-                  try {
-                    await _authService.signUpResident(
-                      fullName: _fullNameController.text.trim(),
-                      mobile: _mobileController.text.trim(),
-                      email: _emailController.text.trim(),
-                      password: _passwordController.text.trim(),
-                    );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  "Account created successfully!",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: AppTheme.primaryBackground, fontWeight: FontWeight.w500),
+                                ),
+                                backgroundColor: AppTheme.accentColor,
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.only(bottom: Responsive.h(context, 32), left: Responsive.w(context, 48), right: Responsive.w(context, 48)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                            Navigator.pushReplacementNamed(context, '/resident-login');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            String message = "Something went wrong. Please try again.";
+                            final error = e.toString().toLowerCase();
 
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account created successfully!")));
-                      Navigator.pushReplacementNamed(context, '/resident-login');
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                    }
-                  }
-                },
+                            if (error.contains('already registered') || error.contains('user already registered') || error.contains('already been registered')) {
+                              message = "An account with this email already exists. Try signing in instead.";
+                            } else if (error.contains('email') && error.contains('invalid')) {
+                              message = "Please enter a valid email address.";
+                            } else if (error.contains('network') || error.contains('socket') || error.contains('connection')) {
+                              message = "No internet connection. Please check your network and try again.";
+                            } else if (error.contains('rate') || error.contains('too many')) {
+                              message = "Too many attempts. Please wait a moment and try again.";
+                            } else if (error.contains('weak password') || error.contains('password')) {
+                              message = "Your password is too weak. Please choose a stronger one.";
+                            }
+
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
+                                title: Row(
+                                  children: [
+                                    Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: Responsive.w(context, 28)),
+                                    SizedBox(width: Responsive.w(context, 8)),
+                                    const Text("Sign Up Failed"),
+                                  ],
+                                ),
+                                content: Text(message),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text(
+                                      "OK",
+                                      style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isLoading = false);
+                          }
+                        }
+                      }
+                    : null,
               ),
 
         SizedBox(height: smallGap),
@@ -169,22 +262,19 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
           children: [
             Text(
               "Already have an account? ",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.primaryBackground.withValues(alpha: 0.8),
-                fontSize: Responsive.sp(context, 14),
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.8), fontSize: Responsive.sp(context, 14)),
             ),
             GestureDetector(
               onTap: () => Navigator.pushReplacementNamed(context, '/resident-login'),
               child: Text(
                 "Sign In",
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor, fontSize: Responsive.sp(context, 16)),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor, fontSize: Responsive.sp(context, 16)),
               ),
             ),
           ],
         ),
+
+        SizedBox(height: Responsive.h(context, AppTheme.space16)),
       ],
     );
   }

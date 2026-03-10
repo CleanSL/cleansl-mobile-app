@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../../../../core/utils/classifier_service.dart'; // Import our conceptual service
+import 'complaint_success_page.dart'; // Import the success page to navigate to after submission
 
 class FileComplaintPage extends StatefulWidget {
   const FileComplaintPage({super.key});
@@ -251,26 +252,49 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
   }
 
   Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          // TODO: Implement submission logic with Husni's backend
-          Navigator.pop(context); // Go back after conceptual submission
-        },
-        icon: const Icon(Icons.send_rounded, size: 18),
-        label: Text(
-          "Submit Report",
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.accentColor,
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: Responsive.h(context, 18)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 24))),
-          elevation: 2,
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton.icon(
+      onPressed: () {
+        // 1. (Optional) Validate that a category and image are present
+        // if (_selectedCategory == null || _evidenceImage == null) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     const SnackBar(content: Text("Please select a category and add a photo")),
+        //   );
+        //   return;
+        // }
+
+        // 2. Simulate a brief "Sending" state
+        // In the future, Husni's backend logic goes here.
+
+        // 3. Navigate to Success Screen
+        // We pass a dummy Reference ID for now
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ComplaintSuccessPage(
+              referenceId: "CMC-89201", 
+            ),
+          ),
+        );
+      },
+      icon: const Icon(Icons.send_rounded, size: 18),
+      label: Text(
+        "Submit Report",
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: Colors.white, 
+          fontWeight: FontWeight.bold, 
+          fontSize: 16,
         ),
       ),
-    );
-  }
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppTheme.accentColor,
+        foregroundColor: Colors.white,
+        padding: EdgeInsets.symmetric(vertical: Responsive.h(context, 18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 24))),
+        elevation: 2,
+      ),
+    ),
+  );
+}
 }

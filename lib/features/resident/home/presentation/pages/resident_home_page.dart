@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
+import '../../../complaints/presentation/pages/file_complaint_page.dart';
 
 class ResidentHomePage extends StatefulWidget {
   const ResidentHomePage({super.key});
@@ -313,7 +314,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () {},
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FileComplaintPage())),
             child: Container(
               padding: EdgeInsets.all(Responsive.w(context, 20)),
               decoration: BoxDecoration(

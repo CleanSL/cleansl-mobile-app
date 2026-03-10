@@ -172,6 +172,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         backgroundColor: AppTheme.primaryBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
+        toolbarHeight: Responsive.h(context, AppTheme.space64),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textColor),
           onPressed: () => Navigator.pop(context),
@@ -186,7 +187,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: Responsive.h(context, AppTheme.space16)),
+            SizedBox(height: Responsive.h(context, AppTheme.space32)),
 
             // 1. Scrollable Filter Chips
             _buildFiltersRow(),
@@ -214,7 +215,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           child: Text('No notifications', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade400)),
                         ),
                       ),
-                    SizedBox(height: Responsive.h(context, AppTheme.space32)),
+                    SizedBox(height: Responsive.h(context, AppTheme.space48)),
                   ],
                 );
               },

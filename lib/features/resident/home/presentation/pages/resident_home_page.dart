@@ -218,86 +218,89 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
   }
 
   Widget _buildNextPickupCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Next Pickup", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 10), vertical: Responsive.h(context, 6)),
-                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
-                child: Row(
-                  children: [
-                    Icon(Icons.schedule_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 14)),
-                    SizedBox(width: Responsive.w(context, 4)),
-                    Text(
-                      "Today",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: Responsive.h(context, 4)),
-          Text("Organic Waste", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
-          SizedBox(height: Responsive.h(context, AppTheme.space24)),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          "10:30",
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
-                        ),
-                        SizedBox(width: Responsive.w(context, 4)),
-                        Text(
-                          "AM",
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: Responsive.h(context, 12)),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(Responsive.r(context, 10)),
-                      child: LinearProgressIndicator(
-                        value: 0.6,
-                        backgroundColor: Colors.grey.shade200,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
-                        minHeight: Responsive.h(context, 8),
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/guide'),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Next Pickup", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 10), vertical: Responsive.h(context, 6)),
+                  decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
+                  child: Row(
+                    children: [
+                      Icon(Icons.schedule_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 14)),
+                      SizedBox(width: Responsive.w(context, 4)),
+                      Text(
+                        "Today",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    SizedBox(height: Responsive.h(context, 8)),
-                    Text("Driver is 2 stops away", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(width: Responsive.w(context, AppTheme.space16)),
-              Container(
-                padding: EdgeInsets.all(Responsive.w(context, 16)),
-                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
-                child: Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 32)),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            SizedBox(height: Responsive.h(context, 4)),
+            Text("Organic Waste", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+            SizedBox(height: Responsive.h(context, AppTheme.space24)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            "10:30",
+                            style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
+                          ),
+                          SizedBox(width: Responsive.w(context, 4)),
+                          Text(
+                            "AM",
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: Responsive.h(context, 12)),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(Responsive.r(context, 10)),
+                        child: LinearProgressIndicator(
+                          value: 0.6,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
+                          minHeight: Responsive.h(context, 8),
+                        ),
+                      ),
+                      SizedBox(height: Responsive.h(context, 8)),
+                      Text("Driver is 2 stops away", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+                SizedBox(width: Responsive.w(context, AppTheme.space16)),
+                Container(
+                  padding: EdgeInsets.all(Responsive.w(context, 16)),
+                  decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  child: Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 32)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -338,7 +341,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
         SizedBox(width: Responsive.w(context, AppTheme.space16)),
         Expanded(
           child: GestureDetector(
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/guide'),
             child: Container(
               padding: EdgeInsets.all(Responsive.w(context, 20)),
               decoration: BoxDecoration(

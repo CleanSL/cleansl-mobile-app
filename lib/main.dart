@@ -21,7 +21,10 @@ import 'features/resident/resident_auth/presentation/pages/forgot_password_page.
 import 'features/resident/resident_auth/presentation/pages/forgot_password_verify_page.dart';
 import 'features/resident/resident_auth/presentation/pages/reset_password_page.dart';
 import 'features/resident/home/presentation/pages/notifications_page.dart';
+import 'features/resident/guide/presentation/pages/guide_main_page.dart';
 import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dart';
+import 'features/resident/guide/presentation/pages/organic_waste_page.dart';
+import 'features/resident/guide/presentation/pages/recyclables_page.dart';
 
 // 2. Change main to be an asynchronous function
 Future<void> main() async {
@@ -98,6 +101,9 @@ class SmartResidentApp extends StatelessWidget {
         '/forgot-password-verify': (context) => const ForgotPasswordVerifyPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
         '/notifications': (context) => const NotificationsPage(),
+        '/guide': (context) => const GuideMainPage(),
+        '/organic-waste': (context) => const OrganicWastePage(),
+        '/recyclables': (context) => const RecyclablesPage(),
       },
     );
   }

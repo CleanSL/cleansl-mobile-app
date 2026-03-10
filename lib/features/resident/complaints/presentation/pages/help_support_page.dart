@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../widgets/faq_tile.dart'; // New Import
 
 class HelpSupportPage extends StatelessWidget {
   const HelpSupportPage({super.key});
@@ -17,10 +18,7 @@ class HelpSupportPage extends StatelessWidget {
         scrolledUnderElevation: 0,
         centerTitle: true,
         toolbarHeight: Responsive.h(context, AppTheme.space64),
-        title: Text(
-          "Help & Support",
-          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
+        title: Text("Help & Support", style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textColor),
@@ -31,127 +29,45 @@ class HelpSupportPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "How can we help?",
-              style: textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900),
-            ),
+            Text("How can we help?", style: textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
             SizedBox(height: Responsive.h(context, AppTheme.space8)),
-            Text(
-              "Find answers to common questions about our waste management services.",
-              style: textTheme.bodyLarge?.copyWith(
-                color: AppTheme.secondaryColor1.withValues(alpha: 0.7),
-                height: 1.5,
-              ),
-            ),
-            
+            Text("Find answers to common questions about our waste management services.",
+                style: textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.7), height: 1.5)),
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
-            // --- FAQ Section ---
-            Text(
-              "Frequently Asked Questions",
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold, 
-                color: AppTheme.secondaryColor1,
-              ),
-            ),
+            
+            Text("Frequently Asked Questions", style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.secondaryColor1)),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
             
-            _buildFAQTile(
-              context,
-              "How long does it take to resolve a complaint?",
-              "Most complaints are reviewed within 24 hours and resolved within 3 working days depending on the nature of the issue.",
-            ),
-            _buildFAQTile(
-              context,
-              "What images should I upload for an overflowing bin?",
-              "Please provide a clear wide-angle shot showing the bin and its surroundings to help our field team locate it quickly.",
-            ),
-            _buildFAQTile(
-              context,
-              "Can I cancel a reported issue?",
-              "Yes, you can cancel a pending report by viewing the complaint details and selecting 'Cancel Report'.",
-            ),
+            // Using extracted Widgets
+            const FAQTile(question: "How long does it take to resolve a complaint?", answer: "Most complaints are reviewed within 24 hours and resolved within 3 working days."),
+            const FAQTile(question: "What images should I upload for an overflowing bin?", answer: "Please provide a clear wide-angle shot showing the bin and its surroundings."),
+            const FAQTile(question: "Can I cancel a reported issue?", answer: "Yes, you can cancel a pending report by viewing the complaint details."),
 
             SizedBox(height: Responsive.h(context, AppTheme.space48)),
-
-            // --- Contact Section ---
-            Container(
-              padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
-              decoration: BoxDecoration(
-                color: AppTheme.secondaryColor1, // Deep dark green from your theme
-                borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.accentColor.withValues(alpha: 0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  )
-                ],
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    "Still need help?",
-                    style: textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: Responsive.h(context, AppTheme.space8)),
-                  Text(
-                    "Our support team is available 24/7 for urgent matters.",
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  SizedBox(height: Responsive.h(context, AppTheme.space24)),
-                  _buildContactButton(context, Icons.phone_rounded, "Call Helpline", () {}),
-                  SizedBox(height: Responsive.h(context, AppTheme.space16)),
-                  _buildContactButton(context, Icons.email_rounded, "Email Support", () {}),
-                ],
-              ),
-            ),
+            _buildContactSection(context, textTheme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFAQTile(BuildContext context, String question, String answer) {
+  Widget _buildContactSection(BuildContext context, TextTheme textTheme) {
     return Container(
-      margin: EdgeInsets.only(bottom: Responsive.h(context, AppTheme.space16)),
+      padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        color: AppTheme.secondaryColor1,
+        borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
+        boxShadow: [BoxShadow(color: AppTheme.accentColor.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 8))],
       ),
-      child: ExpansionTile(
-        shape: const RoundedRectangleBorder(side: BorderSide.none),
-        collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
-        iconColor: AppTheme.accentColor,
-        collapsedIconColor: AppTheme.secondaryColor1,
-        title: Text(
-          question,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        childrenPadding: EdgeInsets.fromLTRB(
-          Responsive.w(context, AppTheme.space16),
-          0,
-          Responsive.w(context, AppTheme.space16),
-          Responsive.h(context, AppTheme.space16),
-        ),
-        expandedAlignment: Alignment.topLeft,
+      child: Column(
         children: [
-          Text(
-            answer,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.secondaryColor1.withValues(alpha: 0.7),
-              height: 1.4,
-            ),
-          ),
+          Text("Still need help?", style: textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+          SizedBox(height: Responsive.h(context, AppTheme.space8)),
+          Text("Our support team is available 24/7 for urgent matters.", textAlign: TextAlign.center, style: textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.7))),
+          SizedBox(height: Responsive.h(context, AppTheme.space24)),
+          _buildContactButton(context, Icons.phone_rounded, "Call Helpline", () {}),
+          SizedBox(height: Responsive.h(context, AppTheme.space16)),
+          _buildContactButton(context, Icons.email_rounded, "Email Support", () {}),
         ],
       ),
     );

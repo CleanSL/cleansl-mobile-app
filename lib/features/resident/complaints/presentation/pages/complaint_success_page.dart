@@ -24,8 +24,7 @@ class ComplaintSuccessPage extends StatelessWidget {
           children: [
             _buildAnimatedCheck(),
             SizedBox(height: Responsive.h(context, 48)),
-            Text("Report Submitted!", 
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
+            Text("Report Submitted!", style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               child: Text(
@@ -82,8 +81,7 @@ class ComplaintSuccessPage extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text("REFERENCE ID: #$referenceId", 
-        style: TextStyle(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold)),
+      child: Text("REFERENCE ID: #$referenceId", style: TextStyle(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold)),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
 import 'help_support_page.dart';
+import 'file_complaint_page.dart';
 
 class Complaint {
   final String id;
@@ -160,7 +161,9 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTick
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         child: FloatingActionButton(
-          onPressed: () {}, // Navigate to Form
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const FileComplaintPage()));
+          },
           backgroundColor: AppTheme.accentColor,
           shape: const CircleBorder(),
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 36),

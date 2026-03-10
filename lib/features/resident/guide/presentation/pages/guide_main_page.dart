@@ -23,26 +23,10 @@ class GuideMainPage extends StatelessWidget {
               ),
         ),
         // Custom circular white back button
-        leading: Padding(
+        leading: IconButton(
           padding: EdgeInsets.only(left: Responsive.w(context, 16)),
-          child: Center(
-            child: InkWell(
-              onTap: () => Navigator.pop(context),
-              borderRadius: BorderRadius.circular(50),
-              child: Container(
-                width: Responsive.w(context, 40),
-                height: Responsive.w(context, 40),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: AppTheme.textColor,
-                ),
-              ),
-            ),
-          ),
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textColor),
         ),
       ),
       body: SingleChildScrollView(
@@ -107,9 +91,7 @@ class GuideMainPage extends StatelessWidget {
               iconColor: Colors.orange.shade700,
               iconBgColor: Colors.orange.shade50,
               tags: ["DIAPERS", "STYROFOAM", "HAZARDOUS"],
-              onTap: () {
-                // TODO: Navigate to Non-recyclable details page
-              },
+              onTap: () => Navigator.pushNamed(context, '/non-recyclables'),
             ),
             SizedBox(height: Responsive.h(context, AppTheme.space24)), // Bottom padding
           ],

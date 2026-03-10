@@ -25,6 +25,7 @@ import 'features/resident/guide/presentation/pages/guide_main_page.dart';
 import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dart';
 import 'features/resident/guide/presentation/pages/organic_waste_page.dart';
 import 'features/resident/guide/presentation/pages/recyclables_page.dart';
+import 'features/resident/guide/presentation/pages/non_recyclable_page.dart';
 
 // 2. Change main to be an asynchronous function
 Future<void> main() async {
@@ -104,6 +105,7 @@ class SmartResidentApp extends StatelessWidget {
         '/guide': (context) => const GuideMainPage(),
         '/organic-waste': (context) => const OrganicWastePage(),
         '/recyclables': (context) => const RecyclablesPage(),
+        '/non-recyclables': (context) => const NonRecyclablePage(),
       },
     );
   }

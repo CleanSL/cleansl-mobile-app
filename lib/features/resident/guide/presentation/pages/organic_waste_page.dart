@@ -24,9 +24,9 @@ class OrganicWastePage extends StatelessWidget {
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
         ),
         // Custom Pill-Shaped Back Button
-        leadingWidth: Responsive.w(context, 110),
+        leadingWidth: Responsive.w(context, 100),
         leading: Padding(
-          padding: EdgeInsets.only(left: Responsive.w(context, AppTheme.space24)),
+          padding: EdgeInsets.only(left: Responsive.w(context, AppTheme.space16)),
           child: Center(
             child: InkWell(
               onTap: () => Navigator.pop(context),
@@ -57,6 +57,19 @@ class OrganicWastePage extends StatelessWidget {
             ),
           ),
         ),
+        // Top Right Icon
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: Responsive.w(context, AppTheme.space24)),
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(Responsive.w(context, 8)),
+                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                child: Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 20)),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.only(
@@ -145,7 +158,7 @@ class OrganicWastePage extends StatelessWidget {
       height: Responsive.h(context, 200),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
-        image: const DecorationImage(image: AssetImage('assets/img/organic_waste.jpeg'), fit: BoxFit.cover),
+        image: const DecorationImage(image: AssetImage('assets/img/organic_waste.jpg'), fit: BoxFit.cover),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: Container(

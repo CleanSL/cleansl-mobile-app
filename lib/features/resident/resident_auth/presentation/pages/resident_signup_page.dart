@@ -77,6 +77,80 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
     super.dispose();
   }
 
+  Future<void> _handleSignUp() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signUpResident(
+        fullName: _fullNameController.text.trim(),
+        mobile: _mobileController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "Account created successfully!",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.primaryBackground, fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: AppTheme.accentColor,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: Responsive.h(context, 32), left: Responsive.w(context, 48), right: Responsive.w(context, 48)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/resident-login');
+      }
+    } catch (e) {
+      if (mounted) {
+        String message = "Something went wrong. Please try again.";
+        final error = e.toString().toLowerCase();
+
+        if (error.contains('already registered') || error.contains('user already registered') || error.contains('already been registered')) {
+          message = "An account with this email already exists. Try signing in instead.";
+        } else if (error.contains('email') && error.contains('invalid')) {
+          message = "Please enter a valid email address.";
+        } else if (error.contains('network') || error.contains('socket') || error.contains('connection')) {
+          message = "No internet connection. Please check your network and try again.";
+        } else if (error.contains('rate') || error.contains('too many')) {
+          message = "Too many attempts. Please wait a moment and try again.";
+        } else if (error.contains('weak password') || error.contains('password')) {
+          message = "Your password is too weak. Please choose a stronger one.";
+        }
+
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(ctx, 20))),
+            title: Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: Responsive.w(ctx, 28)),
+                SizedBox(width: Responsive.w(ctx, 8)),
+                const Text("Sign Up Failed"),
+              ],
+            ),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  "OK",
+                  style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double fieldGap = Responsive.h(context, 20);
@@ -176,83 +250,7 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
             : CleanSlButton(
                 text: "Sign Up",
                 variant: ButtonVariant.primary,
-                onPressed: _canSubmit
-                    ? () async {
-                        setState(() => _isLoading = true);
-
-                        try {
-                          await _authService.signUpResident(
-                            fullName: _fullNameController.text.trim(),
-                            mobile: _mobileController.text.trim(),
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
-                          );
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  "Account created successfully!",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppTheme.primaryBackground, fontWeight: FontWeight.w500),
-                                ),
-                                backgroundColor: AppTheme.accentColor,
-                                behavior: SnackBarBehavior.floating,
-                                margin: EdgeInsets.only(bottom: Responsive.h(context, 32), left: Responsive.w(context, 48), right: Responsive.w(context, 48)),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                            Navigator.pushReplacementNamed(context, '/resident-login');
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            String message = "Something went wrong. Please try again.";
-                            final error = e.toString().toLowerCase();
-
-                            if (error.contains('already registered') || error.contains('user already registered') || error.contains('already been registered')) {
-                              message = "An account with this email already exists. Try signing in instead.";
-                            } else if (error.contains('email') && error.contains('invalid')) {
-                              message = "Please enter a valid email address.";
-                            } else if (error.contains('network') || error.contains('socket') || error.contains('connection')) {
-                              message = "No internet connection. Please check your network and try again.";
-                            } else if (error.contains('rate') || error.contains('too many')) {
-                              message = "Too many attempts. Please wait a moment and try again.";
-                            } else if (error.contains('weak password') || error.contains('password')) {
-                              message = "Your password is too weak. Please choose a stronger one.";
-                            }
-
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
-                                title: Row(
-                                  children: [
-                                    Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: Responsive.w(context, 28)),
-                                    SizedBox(width: Responsive.w(context, 8)),
-                                    const Text("Sign Up Failed"),
-                                  ],
-                                ),
-                                content: Text(message),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: Text(
-                                      "OK",
-                                      style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                          }
-                        }
-                      }
-                    : null,
+                onPressed: _canSubmit ? _handleSignUp : null,
               ),
 
         SizedBox(height: smallGap),

@@ -1,22 +1,84 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
 
-class ResidentHomePage extends StatelessWidget {
+class ResidentHomePage extends StatefulWidget {
   const ResidentHomePage({super.key});
 
   @override
+  State<ResidentHomePage> createState() => _ResidentHomePageState();
+}
+
+class _ResidentHomePageState extends State<ResidentHomePage> {
+  final _supabase = Supabase.instance.client;
+
+  GoogleMapController? _mapController;
+  LatLng? _truckPosition;
+  Set<Marker> _markers = {};
+  StreamSubscription<List<Map<String, dynamic>>>? _locationSub;
+
+  static const LatLng _colombo = LatLng(6.9271, 79.8612);
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeToDriverLocation();
+  }
+
+  void _subscribeToDriverLocation() {
+    _locationSub = _supabase.from('driver_tracking').stream(primaryKey: ['id']).listen((rows) {
+      if (!mounted || rows.isEmpty) return;
+      final row = rows.first;
+      final lat = (row['lat'] as num).toDouble();
+      final lng = (row['lng'] as num).toDouble();
+      final newPos = LatLng(lat, lng);
+
+      setState(() {
+        _truckPosition = newPos;
+        _markers = {
+          Marker(
+            markerId: const MarkerId('truck'),
+            position: newPos,
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            infoWindow: const InfoWindow(title: 'Garbage Truck', snippet: 'Live location'),
+          ),
+        };
+      });
+
+      // Animate after the frame so the (possibly rebuilt) map is ready
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController?.animateCamera(CameraUpdate.newLatLng(newPos));
+      });
+    });
+  }
+
+  // Called on every hot reload — null out the stale native controller so
+  // onMapCreated can assign the fresh one when the map widget rebuilds.
+  @override
+  void reassemble() {
+    super.reassemble();
+    _mapController = null;
+  }
+
+  @override
+  void dispose() {
+    _locationSub?.cancel();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // We use a SafeArea and SingleChildScrollView so the content doesn't hit the notch
-    // and can scroll behind your new floating nav bar.
     return SafeArea(
-      bottom: false, // Let the bottom scroll behind the floating nav bar
+      bottom: false,
       child: SingleChildScrollView(
         padding: EdgeInsets.only(
           left: Responsive.w(context, AppTheme.space24),
           right: Responsive.w(context, AppTheme.space24),
           top: Responsive.h(context, AppTheme.space32),
-          // Extra bottom padding so the last item doesn't get hidden under the floating nav bar
           bottom: Responsive.h(context, 120),
         ),
         child: Column(
@@ -25,25 +87,28 @@ class ResidentHomePage extends StatelessWidget {
             _buildHeader(context),
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
 
-            // 1. Live Map Tracking Section
+            // 1. Live Map Tracking Section (Now with actual Google Maps)
             _buildLiveMapTracking(context),
-            SizedBox(height: Responsive.h(context, AppTheme.space32)),
+            SizedBox(height: Responsive.h(context, AppTheme.space24)),
 
             // 2. Next Scheduled Pickup
             _buildNextPickupCard(context),
-            SizedBox(height: Responsive.h(context, AppTheme.space32)),
-
-            Text("Quick Actions", style: Theme.of(context).textTheme.titleLarge),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
-            _buildQuickActionsRow(context),
 
+            // 3. Quick Actions
+            _buildQuickActionsRow(context),
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
-            Text("Recent Activity", style: Theme.of(context).textTheme.titleLarge),
-            Text(
-              "See All",
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.7)),
+
+            // 4. Recent Activity
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Recent Activity", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  "See All",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
             _buildRecentActivityList(context),
@@ -54,6 +119,7 @@ class ResidentHomePage extends StatelessWidget {
   }
 
   // --- COMPONENT WIDGETS ---
+
   Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -61,36 +127,31 @@ class ResidentHomePage extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Hello, User Name", // Updated as requested
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.textColor),
-            ),
+            Text("Hello, User Name", style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.textColor)),
             SizedBox(height: Responsive.h(context, 4)),
-            Text(
-              "Good morning", // Updated as requested
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.7)),
-            ),
+            Text("Good morning", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.7))),
           ],
         ),
-        // Notification bell icon
-        Container(
-          padding: EdgeInsets.all(Responsive.w(context, 12)),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/notifications'),
+          child: Container(
+            padding: EdgeInsets.all(Responsive.w(context, 12)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: const Icon(Icons.notifications_outlined, color: AppTheme.textColor),
           ),
-          child: const Icon(Icons.notifications_outlined, color: AppTheme.textColor),
         ),
       ],
     );
   }
 
+  // UPDATED: Live Google Map Integration with real-time truck tracking
   Widget _buildLiveMapTracking(BuildContext context) {
+    final bool isActive = _truckPosition != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -100,23 +161,18 @@ class ResidentHomePage extends StatelessWidget {
             Text("Live Truck Tracking", style: Theme.of(context).textTheme.titleLarge),
             Container(
               padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 12), vertical: Responsive.h(context, 6)),
-              decoration: BoxDecoration(
-                color: AppTheme.accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(Responsive.r(context, 20)),
-              ),
+              decoration: BoxDecoration(color: (isActive ? AppTheme.accentColor : Colors.grey).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
               child: Row(
                 children: [
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(color: AppTheme.accentColor, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: isActive ? AppTheme.accentColor : Colors.grey, shape: BoxShape.circle),
                   ),
                   SizedBox(width: Responsive.w(context, 6)),
                   Text(
-                    "Active",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
+                    isActive ? "Active" : "No Signal",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isActive ? AppTheme.accentColor : Colors.grey, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -125,18 +181,38 @@ class ResidentHomePage extends StatelessWidget {
         ),
         SizedBox(height: Responsive.h(context, AppTheme.space16)),
 
-        // Placeholder for future map integration
+        // Google Map with live truck marker
         Container(
           height: Responsive.h(context, 220),
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.grey[300],
             borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8))],
           ),
-          child: const Center(
-            child: Text('Map Integration goes here', style: TextStyle(color: Colors.grey)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(target: _truckPosition ?? _colombo, zoom: 13.5),
+              onMapCreated: (controller) => _mapController = controller,
+              markers: _markers,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              mapType: MapType.normal,
+            ),
           ),
         ),
+
+        if (!isActive)
+          Padding(
+            padding: EdgeInsets.only(top: Responsive.h(context, 8)),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: Colors.grey.shade500),
+                SizedBox(width: Responsive.w(context, 4)),
+                Text("Waiting for truck location...", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500)),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -146,43 +222,80 @@ class ResidentHomePage extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
       decoration: BoxDecoration(
-        color: AppTheme.secondaryColor1, // Dark green premium background
+        color: Colors.white,
         borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.secondaryColor1.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.local_shipping_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 24)),
-              SizedBox(width: Responsive.w(context, AppTheme.space8)),
-              Text(
-                "Next Scheduled Pickup",
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.accentColor),
-              ),
-              Text(
-                "Organic Waste", // Updated as requested
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppTheme.accentColor.withValues(alpha: 0.8)),
+              Text("Next Pickup", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 10), vertical: Responsive.h(context, 6)),
+                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
+                child: Row(
+                  children: [
+                    Icon(Icons.schedule_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 14)),
+                    SizedBox(width: Responsive.w(context, 4)),
+                    Text(
+                      "Today",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          SizedBox(height: Responsive.h(context, AppTheme.space16)),
-          Text("8:00 AM", style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.primaryBackground)),
-          SizedBox(height: Responsive.h(context, AppTheme.space8)),
-          Text(
-            "General Waste & Recyclables",
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBackground.withValues(alpha: 0.8)),
+          SizedBox(height: Responsive.h(context, 4)),
+          Text("Organic Waste", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+          SizedBox(height: Responsive.h(context, AppTheme.space24)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          "10:30",
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
+                        ),
+                        SizedBox(width: Responsive.w(context, 4)),
+                        Text(
+                          "AM",
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: Responsive.h(context, 12)),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(Responsive.r(context, 10)),
+                      child: LinearProgressIndicator(
+                        value: 0.6,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
+                        minHeight: Responsive.h(context, 8),
+                      ),
+                    ),
+                    SizedBox(height: Responsive.h(context, 8)),
+                    Text("Driver is 2 stops away", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
+                  ],
+                ),
+              ),
+              SizedBox(width: Responsive.w(context, AppTheme.space16)),
+              Container(
+                padding: EdgeInsets.all(Responsive.w(context, 16)),
+                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                child: Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 32)),
+              ),
+            ],
           ),
         ],
       ),
@@ -191,100 +304,106 @@ class ResidentHomePage extends StatelessWidget {
 
   Widget _buildQuickActionsRow(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildActionCard(context, icon: Icons.recycling_rounded, label: "Report", onTap: () {}),
-        _buildActionCard(context, icon: Icons.support_agent_rounded, label: "Guide", onTap: () {}),
-      ],
-    );
-  }
-
-  Widget _buildActionCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: Responsive.w(context, 100),
-        padding: EdgeInsets.symmetric(vertical: Responsive.h(context, AppTheme.space16)),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppTheme.accentColor, size: Responsive.w(context, 32)),
-            SizedBox(height: Responsive.h(context, AppTheme.space8)),
-            Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, fontSize: Responsive.sp(context, 12)),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              padding: EdgeInsets.all(Responsive.w(context, 20)),
+              decoration: BoxDecoration(
+                color: AppTheme.accentColor,
+                borderRadius: BorderRadius.circular(Responsive.r(context, 20)),
+                boxShadow: [BoxShadow(color: AppTheme.accentColor.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(Responsive.w(context, 8)),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), shape: BoxShape.circle),
+                    child: Icon(Icons.warning_rounded, color: Colors.white, size: Responsive.w(context, 24)),
+                  ),
+                  SizedBox(height: Responsive.h(context, AppTheme.space24)),
+                  Text(
+                    "Report",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: Responsive.h(context, 4)),
+                  Text("Missed pickup or\noverflow", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.9))),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
-      ),
+        SizedBox(width: Responsive.w(context, AppTheme.space16)),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              padding: EdgeInsets.all(Responsive.w(context, 20)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(Responsive.r(context, 20)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(Responsive.w(context, 8)),
+                    decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), shape: BoxShape.circle),
+                    child: Icon(Icons.recycling_rounded, color: Colors.blue, size: Responsive.w(context, 24)),
+                  ),
+                  SizedBox(height: Responsive.h(context, AppTheme.space24)),
+                  Text(
+                    "Guide",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textColor, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: Responsive.h(context, 4)),
+                  Text("Sorting rules", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
+                  SizedBox(height: Responsive.h(context, 16)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildRecentActivityList(BuildContext context) {
     return Column(
       children: [
-        _buildActivityTile(context, title: "Recycle Pickup Completed", date: "Yesterday, 9:45 AM", isCompleted: true),
+        _buildActivityTile(context, title: "Recycling Pickup Completed", date: "Yesterday, 9:45 AM", icon: Icons.check_circle_rounded, iconColor: AppTheme.accentColor),
         SizedBox(height: Responsive.h(context, AppTheme.space16)),
-        _buildActivityTile(context, title: "Issue Reported: Missed Pick up", date: "Mon, 14th Feb", isCompleted: true),
-        SizedBox(height: Responsive.h(context, AppTheme.space16)),
-        _buildActivityTile(context, title: "Extra Pickup Requested", date: "Sun, 13th Feb", isCompleted: false),
+        _buildActivityTile(context, title: "Issue Reported: Missed Bin", date: "Mon, 14 Aug", icon: Icons.history_rounded, iconColor: Colors.orange.shade700),
       ],
     );
   }
 
-  Widget _buildActivityTile(
-    BuildContext context, {
-    required String title,
-    required String date,
-    required bool isCompleted,
-  }) {
+  Widget _buildActivityTile(BuildContext context, {required String title, required String date, required IconData icon, required Color iconColor}) {
     return Container(
-      padding: EdgeInsets.all(Responsive.w(context, AppTheme.space16)),
+      padding: EdgeInsets.all(Responsive.w(context, 16)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
-        border: Border.all(color: AppTheme.secondaryColor1.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(Responsive.r(context, 20)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(Responsive.w(context, 10)),
-            decoration: BoxDecoration(
-              color: isCompleted ? AppTheme.accentColor.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isCompleted ? Icons.check_circle_outline_rounded : Icons.pending_actions_rounded,
-              color: isCompleted ? AppTheme.accentColor : Colors.orange,
-              size: Responsive.w(context, 20),
-            ),
+            padding: EdgeInsets.all(Responsive.w(context, 12)),
+            decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: Responsive.w(context, 24)),
           ),
           SizedBox(width: Responsive.w(context, AppTheme.space16)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.labelLarge),
+                Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 SizedBox(height: Responsive.h(context, 4)),
-                Text(
-                  date,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6)),
-                ),
+                Text(date, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
               ],
             ),
           ),

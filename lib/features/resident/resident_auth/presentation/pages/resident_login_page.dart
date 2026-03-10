@@ -36,6 +36,49 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
     super.dispose();
   }
 
+  Future<void> _handleSignIn() async {
+    final identifier = _isEmailMode ? _emailController.text.trim() : _mobileController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (identifier.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in all fields")));
+      return;
+    }
+
+    if (_isEmailMode && !RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(identifier)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid email address")));
+      return;
+    }
+
+    if (!_isEmailMode && identifier.length != 9) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid 9-digit mobile number")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInResident(identifier: identifier, password: password);
+      if (mounted) Navigator.pushReplacementNamed(context, '/resident-main');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithGoogle();
+      if (mounted) Navigator.pushReplacementNamed(context, '/resident-main');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double gap = Responsive.h(context, AppTheme.space16);
@@ -73,45 +116,7 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
             : CleanSlButton(
                 text: "Sign In",
                 variant: ButtonVariant.primary,
-                onPressed: () async {
-                  // Basic Validation
-                  final identifier = _isEmailMode ? _emailController.text.trim() : _mobileController.text.trim();
-                  final password = _passwordController.text.trim();
-
-                  if (identifier.isEmpty || password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in all fields")));
-                    return;
-                  }
-
-                  if (_isEmailMode && !RegExp(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$').hasMatch(identifier)) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid email address")));
-                    return;
-                  }
-
-                  if (!_isEmailMode && identifier.length != 9) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid 9-digit mobile number")));
-                    return;
-                  }
-
-                  setState(() => _isLoading = true);
-
-                  try {
-                    // Right now, Supabase expects an email to log in
-                    await _authService.signInResident(identifier: identifier, password: password);
-
-                    // If Supabase says the password is correct, go to the main app!
-                    if (context.mounted) {
-                      Navigator.pushReplacementNamed(context, '/resident-main');
-                    }
-                  } catch (e) {
-                    // Show error if password is wrong or user doesn't exist
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                    }
-                  } finally {
-                    if (mounted) setState(() => _isLoading = false);
-                  }
-                },
+                onPressed: _handleSignIn,
               ),
 
         SizedBox(height: gap),
@@ -132,33 +137,12 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
         CleanSlButton(
           text: "Continue with Google",
           variant: ButtonVariant.secondary,
-<<<<<<< HEAD
           icon: SvgPicture.asset(
             'assets/icons/google_logo.svg',
             height: Responsive.h(context, 32),
             width: Responsive.w(context, 32),
           ),
-      onPressed: () async {
-            setState(() => _isLoading = true);
-
-            try {
-              // 1. Run your new Google Sign-In function
-              await _authService.signInWithGoogle();
-              
-              // 2. If successful, push them to the main app dashboard!
-              if (mounted) Navigator.pushReplacementNamed(context, '/resident-main');
-            } catch (e) {
-              // Show any errors (like if they closed the Google popup)
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-            } finally {
-              if (mounted) setState(() => _isLoading = false);
-            }
-          },
-        
-=======
-          icon: SvgPicture.asset('assets/icons/google_logo.svg', height: Responsive.h(context, 32), width: Responsive.w(context, 32)),
-          onPressed: () {},
->>>>>>> 96e589290679c998e17aa89fe788736c7142cb9e
+          onPressed: _handleGoogleSignIn,
         ),
 
         SizedBox(height: gap),

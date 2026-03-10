@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 1. Import Supabase
 import 'package:flutter_dotenv/flutter_dotenv.dart'; //  Import dotenv
+
+import 'package:firebase_core/firebase_core.dart';
+import 'core/services/notification_service.dart';
 
 // Import custom theme file
 import 'core/theme/app_theme.dart';
@@ -16,6 +20,7 @@ import 'features/resident/resident_auth/presentation/pages/resident_signup_page.
 import 'features/resident/resident_auth/presentation/pages/forgot_password_page.dart';
 import 'features/resident/resident_auth/presentation/pages/forgot_password_verify_page.dart';
 import 'features/resident/resident_auth/presentation/pages/reset_password_page.dart';
+import 'features/resident/home/presentation/pages/notifications_page.dart';
 import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dart';
 
 // 2. Change main to be an asynchronous function
@@ -29,18 +34,30 @@ Future<void> main() async {
     // 2. Load the .env file
     await dotenv.load(fileName: ".env");
 
-    // 3. Initialize Supabase using the hidden variables
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? '',
-      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-    );
+    // 3. Initialize Firebase — only on mobile (web reads no native config file)
+    if (!kIsWeb) {
+      await Firebase.initializeApp();
+    }
+
+    // 4. Initialize Supabase using the hidden variables
+    await Supabase.initialize(url: dotenv.env['SUPABASE_URL'] ?? '', anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '');
+
+    // 5. Ask for notification permission and obtain this device's unique FCM token (mobile only)
+    if (!kIsWeb) {
+      await NotificationService.requestPermission();
+      await NotificationService.getDeviceToken(); // token is printed to debug console
+      NotificationService.listenForeground();
+    }
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
 
   // Determine the start route based on existing session
-  final session = Supabase.instance.client.auth.currentSession;
-  final String startRoute = session != null ? '/resident-main' : '/language';
+  String startRoute = '/language';
+  try {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) startRoute = '/resident-main';
+  } catch (_) {}
 
   runApp(SmartResidentApp(initialRoute: startRoute));
 }
@@ -78,9 +95,9 @@ class SmartResidentApp extends StatelessWidget {
         '/resident-signup': (context) => const ResidentSignUpPage(),
         '/resident-main': (context) => const ResidentMainNavPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
-        '/forgot-password-verify': (context) =>
-            const ForgotPasswordVerifyPage(),
+        '/forgot-password-verify': (context) => const ForgotPasswordVerifyPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
+        '/notifications': (context) => const NotificationsPage(),
       },
     );
   }

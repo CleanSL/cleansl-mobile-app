@@ -104,9 +104,12 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Recent Activity", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                Text(
-                  "See All",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/recent-activity'),
+                  child: Text(
+                    "See All",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),

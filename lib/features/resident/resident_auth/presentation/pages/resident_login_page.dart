@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
-import '../../../../../core/services/auth_service.dart'; // 🟢 ADDED: Your backend service
+import '../../../../../core/services/auth_service.dart'; //  ADDED:backend service
 import '../../../../../shared/widgets/cleansl_button.dart';
 import '../../../../../shared/widgets/cleansl_text_input.dart';
 import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
@@ -132,8 +132,33 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
         CleanSlButton(
           text: "Continue with Google",
           variant: ButtonVariant.secondary,
+<<<<<<< HEAD
+          icon: SvgPicture.asset(
+            'assets/icons/google_logo.svg',
+            height: Responsive.h(context, 32),
+            width: Responsive.w(context, 32),
+          ),
+      onPressed: () async {
+            setState(() => _isLoading = true);
+
+            try {
+              // 1. Run your new Google Sign-In function
+              await _authService.signInWithGoogle();
+              
+              // 2. If successful, push them to the main app dashboard!
+              if (mounted) Navigator.pushReplacementNamed(context, '/resident-main');
+            } catch (e) {
+              // Show any errors (like if they closed the Google popup)
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+            } finally {
+              if (mounted) setState(() => _isLoading = false);
+            }
+          },
+        
+=======
           icon: SvgPicture.asset('assets/icons/google_logo.svg', height: Responsive.h(context, 32), width: Responsive.w(context, 32)),
           onPressed: () {},
+>>>>>>> 96e589290679c998e17aa89fe788736c7142cb9e
         ),
 
         SizedBox(height: gap),

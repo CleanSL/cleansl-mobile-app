@@ -12,7 +12,7 @@ class CleanSlButton extends StatelessWidget {
   final double width;
   final Widget? icon; // Optional icon parameter
 
-  const CleanSlButton({
+  const CleanSlButton(required String text, {
     super.key,
     required this.text,
     required this.onPressed,

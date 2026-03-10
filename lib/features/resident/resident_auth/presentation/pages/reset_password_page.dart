@@ -15,6 +15,7 @@ class ResetPasswordPage extends StatefulWidget {
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  // ignore: prefer_final_fields — will be toggled true/false during async backend call
   bool _isLoading = false;
 
   bool get _passwordIsValid {

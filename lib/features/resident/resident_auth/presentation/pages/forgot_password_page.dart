@@ -17,6 +17,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   bool _isEmailMode = true;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
+  // ignore: prefer_final_fields — will be toggled true/false during async backend call
   bool _isLoading = false;
 
   @override

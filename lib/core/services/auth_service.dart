@@ -1,24 +1,20 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
-// To grab your Web Client ID securely
 
 class AuthService {
-  // The global Supabase connection
   final _supabase = Supabase.instance.client;
 
   // ==========================================
   // RESIDENT AUTHENTICATION (EMAIL/MOBILE)
   // ==========================================
 
-  /// Signs up a new resident and saves their profile details
   Future<void> signUpResident({
     required String fullName,
     required String mobile,
     required String email,
     required String password,
   }) async {
-    // 1. Create the secure Auth User using Email (Free and standard)
     final AuthResponse response = await _supabase.auth.signUp(
       email: email,
       password: password,
@@ -26,125 +22,145 @@ class AuthService {
 
     final user = response.user;
 
-    // 2. Save all details, including mobile, into the 'profiles' table
     if (user != null) {
-      await _supabase.from('profiles').insert({
+      // Step A: Insert into the newly named 'users' table
+      await _supabase.from('users').insert({
         'id': user.id,
+        'role': 'resident', 
         'full_name': fullName,
-        'mobile': mobile,
-        'email': email,
+        'phone_number': mobile, // Matches new schema
+        'email': email,         // Requires the SQL fix above!
+      });
+
+      // Step B: Initialize their specific 'resident_profiles' row
+      await _supabase.from('resident_profiles').insert({
+        'user_id': user.id,     // Matches new schema
+        'total_points': 0,
       });
     }
   }
 
-  /// Logs in an existing resident using either Email OR Mobile Number
   Future<void> signInResident({
-    required String identifier, // Catches either email or mobile from the UI
+    required String identifier, 
     required String password,
   }) async {
     String loginEmail = identifier;
 
-    // STEP 1: Check if the account actually exists in our profiles table
     if (identifier.contains('@')) {
-      // It's an email, let's verify it exists
       final response = await _supabase
-          .from('profiles')
+          .from('users')
           .select('email')
           .eq('email', identifier)
+          .eq('role', 'resident')
           .maybeSingle();
 
       if (response == null) {
-        throw Exception("No account found with this email address.");
+        throw Exception("No resident account found with this email address.");
       }
     } else {
-      // It's a mobile number, let's find the attached email
       final response = await _supabase
-          .from('profiles')
+          .from('users')
           .select('email')
-          .eq('mobile', identifier)
+          .eq('phone_number', identifier) // Matches new schema
+          .eq('role', 'resident')
           .maybeSingle();
 
       if (response == null) {
-        throw Exception("No account found with this mobile number.");
+        throw Exception("No resident account found with this mobile number.");
       }
-      
-      // Grab the email attached to that phone number
       loginEmail = response['email'];
     }
 
-    // STEP 2: Log into the secure Auth system using the verified email
     try {
       await _supabase.auth.signInWithPassword(
         email: loginEmail,
         password: password,
       );
     } on AuthException catch (e) {
-      // Supabase throws an AuthException if the password doesn't match
       if (e.message == 'Invalid login credentials') {
         throw Exception("Incorrect password. Please try again.");
       }
-      // If it's a different error (like rate limiting), show the default message
       throw Exception(e.message);
     }
   }
-// ==========================================
-  // GOOGLE AUTHENTICATION (v7.2.0 COMPLIANT)
+
+  // ==========================================
+  // GOOGLE AUTHENTICATION 
   // ==========================================
 
-  /// Triggers the native Google Sign-In and passes the token to Supabase
   Future<void> signInWithGoogle() async {
-    // 1. Grab your Web Client ID from the hidden .env file
     final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
-    
-    if (webClientId == null) {
-      throw Exception('Missing GOOGLE_WEB_CLIENT_ID in .env file');
-    }
+    if (webClientId == null) throw Exception('Missing GOOGLE_WEB_CLIENT_ID in .env file');
 
-    // 2. Initialize the v7 Singleton
     final GoogleSignIn googleSignIn = GoogleSignIn.instance;
-    await googleSignIn.initialize(
-      clientId: webClientId,       
-      serverClientId: webClientId, 
-    );
+    await googleSignIn.initialize(clientId: webClientId, serverClientId: webClientId);
 
-    // 3. NEW v7 LOGIC: Define what permissions we need to get the Access Token
     final scopes = ['email', 'profile'];
-
-    // 4. Trigger the bottom sheet for the user to select their Gmail account
     await googleSignIn.signOut();
     final googleUser = await googleSignIn.authenticate(scopeHint: scopes);
 
-    // 5. NEW v7 LOGIC: Fetch the Access Token using the new Authorization Client
+    if (googleUser == null) return;
+
     final authorization = await googleUser.authorizationClient.authorizationForScopes(scopes) ?? 
                           await googleUser.authorizationClient.authorizeScopes(scopes);
 
-    // 6. Gather the two tokens from their new, completely separate locations
     final idToken = googleUser.authentication.idToken;
     final accessToken = authorization.accessToken;
 
-    if (idToken == null || accessToken == null) {
-      throw Exception('Failed to get secure tokens from Google.');
-    }
+    if (idToken == null || accessToken == null) throw Exception('Failed to get secure tokens from Google.');
 
-    // 7. Hand the tokens to Supabase to verify and log the user in!
-    await _supabase.auth.signInWithIdToken(
+    final response = await _supabase.auth.signInWithIdToken(
       provider: OAuthProvider.google,
       idToken: idToken,
       accessToken: accessToken,
     );
+
+    final user = response.user;
+    if (user != null) {
+      // Check if this Google user is already in the new schema
+      final existingUser = await _supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (existingUser == null) {
+        // Automatically save new Google users to the new database structure
+        await _supabase.from('users').insert({
+          'id': user.id,
+          'role': 'resident',
+          'full_name': user.userMetadata?['full_name'] ?? 'Google User',
+          'email': user.email ?? '',
+        });
+
+        await _supabase.from('resident_profiles').insert({
+          'user_id': user.id,
+          'total_points': 0,
+        });
+      }
+    }
   }
+
   // ==========================================
   // DRIVER AUTHENTICATION (OTP FLOW)
   // ==========================================
 
-  /// 1. Sends the OTP to the driver's phone
   Future<void> sendDriverOTP({required String mobile}) async {
-    // Append the Sri Lanka country code automatically
+    final driverCheck = await _supabase
+        .from('users')
+        .select('id')
+        .eq('phone_number', mobile) // Matches new schema
+        .eq('role', 'driver')
+        .maybeSingle();
+
+    if (driverCheck == null) {
+      throw Exception("No authorized driver account found for this number.");
+    }
+
     final formattedNumber = '+94$mobile';
     await _supabase.auth.signInWithOtp(phone: formattedNumber);
   }
 
-  /// 2. Verifies the code the driver typed in
   Future<void> verifyDriverOTP({required String mobile, required String token}) async {
     final formattedNumber = '+94$mobile';
     final AuthResponse response = await _supabase.auth.verifyOTP(

@@ -62,7 +62,7 @@ class ResidentHomePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Hello, User Name", // Updated as requested
+              "Hello, User Name",
               style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.textColor),
             ),
             SizedBox(height: Responsive.h(context, 4)),

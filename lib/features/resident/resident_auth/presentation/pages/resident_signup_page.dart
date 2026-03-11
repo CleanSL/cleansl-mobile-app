@@ -176,83 +176,109 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
             : CleanSlButton(
                 text: "Sign Up",
                 variant: ButtonVariant.primary,
-                onPressed: _canSubmit
-                    ? () async {
-                        setState(() => _isLoading = true);
+                // THE FIX: The button is always clickable now, and reveals the exact error
+                onPressed: () async {
+                  // 1. Run the gatekeeper checks and show the exact issue
+                  if (!_isFullNameValid) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Name can only contain letters.")));
+                    return;
+                  }
+                  if (!_isMobileValid) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mobile number must be exactly 9 digits.")));
+                    return;
+                  }
+                  if (!_isEmailValid) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid email address.")));
+                    return;
+                  }
+                  if (!_passwordIsValid) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password does not meet requirements.")));
+                    return;
+                  }
+                  if (!_passwordsMatch) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match.")));
+                    return;
+                  }
+                  if (!_agreedToTerms) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You must agree to the Terms & Conditions.")));
+                    return;
+                  }
 
-                        try {
-                          await _authService.signUpResident(
-                            fullName: _fullNameController.text.trim(),
-                            mobile: _mobileController.text.trim(),
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
-                          );
+                  // 2. If all checks pass, run his original submit logic
+                  setState(() => _isLoading = true);
 
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  "Account created successfully!",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppTheme.primaryBackground, fontWeight: FontWeight.w500),
-                                ),
-                                backgroundColor: AppTheme.accentColor,
-                                behavior: SnackBarBehavior.floating,
-                                margin: EdgeInsets.only(bottom: Responsive.h(context, 32), left: Responsive.w(context, 48), right: Responsive.w(context, 48)),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                            Navigator.pushReplacementNamed(context, '/resident-login');
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            String message = "Something went wrong. Please try again.";
-                            final error = e.toString().toLowerCase();
+                  try {
+                    await _authService.signUpResident(
+                      fullName: _fullNameController.text.trim(),
+                      mobile: _mobileController.text.trim(),
+                      email: _emailController.text.trim(),
+                      password: _passwordController.text.trim(),
+                    );
 
-                            if (error.contains('already registered') || error.contains('user already registered') || error.contains('already been registered')) {
-                              message = "An account with this email already exists. Try signing in instead.";
-                            } else if (error.contains('email') && error.contains('invalid')) {
-                              message = "Please enter a valid email address.";
-                            } else if (error.contains('network') || error.contains('socket') || error.contains('connection')) {
-                              message = "No internet connection. Please check your network and try again.";
-                            } else if (error.contains('rate') || error.contains('too many')) {
-                              message = "Too many attempts. Please wait a moment and try again.";
-                            } else if (error.contains('weak password') || error.contains('password')) {
-                              message = "Your password is too weak. Please choose a stronger one.";
-                            }
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            "Account created successfully!",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppTheme.primaryBackground, fontWeight: FontWeight.w500),
+                          ),
+                          backgroundColor: AppTheme.accentColor,
+                          behavior: SnackBarBehavior.floating,
+                          margin: EdgeInsets.only(bottom: Responsive.h(context, 32), left: Responsive.w(context, 48), right: Responsive.w(context, 48)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                      Navigator.pushReplacementNamed(context, '/resident-login');
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      String message = "Something went wrong. Please try again.";
+                      final error = e.toString().toLowerCase();
 
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
-                                title: Row(
-                                  children: [
-                                    Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: Responsive.w(context, 28)),
-                                    SizedBox(width: Responsive.w(context, 8)),
-                                    const Text("Sign Up Failed"),
-                                  ],
-                                ),
-                                content: Text(message),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: Text(
-                                      "OK",
-                                      style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                          }
-                        }
+                      if (error.contains('already registered') || error.contains('user already registered') || error.contains('already been registered')) {
+                        message = "An account with this email already exists. Try signing in instead.";
+                      } else if (error.contains('email') && error.contains('invalid')) {
+                        message = "Please enter a valid email address.";
+                      } else if (error.contains('network') || error.contains('socket') || error.contains('connection')) {
+                        message = "No internet connection. Please check your network and try again.";
+                      } else if (error.contains('rate') || error.contains('too many')) {
+                        message = "Too many attempts. Please wait a moment and try again.";
+                      } else if (error.contains('weak password') || error.contains('password')) {
+                        message = "Your password is too weak. Please choose a stronger one.";
                       }
-                    : null,
+
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
+                          title: Row(
+                            children: [
+                              Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: Responsive.w(context, 28)),
+                              SizedBox(width: Responsive.w(context, 8)),
+                              const Text("Sign Up Failed"),
+                            ],
+                          ),
+                          content: Text(message),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(
+                                "OK",
+                                style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                    }
+                  }
+                },
               ),
 
         SizedBox(height: smallGap),

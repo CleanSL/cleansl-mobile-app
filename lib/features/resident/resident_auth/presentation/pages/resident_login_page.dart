@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
-import '../../../../../core/services/auth_service.dart'; //  ADDED:backend service
+import '../../../../../core/services/auth_service.dart'; 
 import '../../../../../shared/widgets/cleansl_button.dart';
 import '../../../../../shared/widgets/cleansl_text_input.dart';
 import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
@@ -16,10 +16,8 @@ class ResidentLoginPage extends StatefulWidget {
 }
 
 class _ResidentLoginPageState extends State<ResidentLoginPage> {
-  // Teammate's original UI toggle
   bool _isEmailMode = false;
 
-  // 🟢 ADDED: Memory and Connection setup
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
@@ -27,7 +25,6 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // 🟢 ADDED: Cleanup to prevent memory leaks
   @override
   void dispose() {
     _emailController.dispose();
@@ -46,8 +43,10 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
       subtitle: "Please enter your account details to continue making a difference in your community.",
       topSpacing: AppTheme.space16,
       formChildren: [
-        // 🟢 CHANGED: Removed 'const' and added your controllers to his inputs
-        _isEmailMode ? CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController) : CleanSlMobNumInput(controller: _mobileController),
+        _isEmailMode 
+            ? CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController) 
+            : CleanSlMobNumInput(controller: _mobileController),
+        
         SizedBox(height: gap),
 
         CleanSlTextInput(hintText: "Password", isPassword: true, controller: _passwordController),
@@ -67,14 +66,12 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
 
         SizedBox(height: gap),
 
-        // 🟢 CHANGED: Wrapped his button in your loading state and database logic
         _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.accentColor))
             : CleanSlButton(
                 text: "Sign In",
                 variant: ButtonVariant.primary,
                 onPressed: () async {
-                  // Basic Validation
                   final identifier = _isEmailMode ? _emailController.text.trim() : _mobileController.text.trim();
                   final password = _passwordController.text.trim();
 
@@ -96,15 +93,12 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
                   setState(() => _isLoading = true);
 
                   try {
-                    // Right now, Supabase expects an email to log in
                     await _authService.signInResident(identifier: identifier, password: password);
 
-                    // If Supabase says the password is correct, go to the main app!
                     if (context.mounted) {
                       Navigator.pushReplacementNamed(context, '/resident-main');
                     }
                   } catch (e) {
-                    // Show error if password is wrong or user doesn't exist
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
                     }
@@ -129,36 +123,29 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
 
         SizedBox(height: gap),
 
+        // ==========================================
+        // THE RESOLVED GOOGLE BUTTON
+        // ==========================================
         CleanSlButton(
           text: "Continue with Google",
           variant: ButtonVariant.secondary,
-<<<<<<< HEAD
           icon: SvgPicture.asset(
             'assets/icons/google_logo.svg',
             height: Responsive.h(context, 32),
             width: Responsive.w(context, 32),
           ),
-      onPressed: () async {
+          onPressed: () async {
             setState(() => _isLoading = true);
 
             try {
-              // 1. Run your new Google Sign-In function
               await _authService.signInWithGoogle();
-              
-              // 2. If successful, push them to the main app dashboard!
               if (mounted) Navigator.pushReplacementNamed(context, '/resident-main');
             } catch (e) {
-              // Show any errors (like if they closed the Google popup)
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
             } finally {
               if (mounted) setState(() => _isLoading = false);
             }
           },
-        
-=======
-          icon: SvgPicture.asset('assets/icons/google_logo.svg', height: Responsive.h(context, 32), width: Responsive.w(context, 32)),
-          onPressed: () {},
->>>>>>> 96e589290679c998e17aa89fe788736c7142cb9e
         ),
 
         SizedBox(height: gap),

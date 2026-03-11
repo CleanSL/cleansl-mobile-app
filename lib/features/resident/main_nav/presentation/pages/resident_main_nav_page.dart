@@ -33,7 +33,7 @@ class _ResidentMainNavPageState extends State<ResidentMainNavPage> {
     return Scaffold(
       backgroundColor: AppTheme.primaryBackground,
       extendBody: true,
-      body: _screens[_currentIndex],
+      body: IndexedStack(index: _currentIndex, children: _screens),
 
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(

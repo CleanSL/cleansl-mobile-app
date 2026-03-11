@@ -26,7 +26,7 @@ class NonRecyclablePage extends StatelessWidget {
         leadingWidth: Responsive.w(context, 100),
         leading: Padding(
           padding: EdgeInsets.only(left: Responsive.w(context, AppTheme.space16)),
-          child: Center(child: GuideBackButton(iconColor: AppTheme.secondaryColor1)),
+          child: Center(child: GuideBackButton(iconColor: AppTheme.accentColor)),
         ),
         actions: [
           Padding(
@@ -34,8 +34,8 @@ class NonRecyclablePage extends StatelessWidget {
             child: Center(
               child: Container(
                 padding: EdgeInsets.all(Responsive.w(context, 8)),
-                decoration: BoxDecoration(color: AppTheme.secondaryColor1.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: Icon(Icons.delete_outline_rounded, color: AppTheme.secondaryColor1, size: Responsive.w(context, 20)),
+                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                child: Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: Responsive.w(context, 20)),
               ),
             ),
           ),
@@ -52,17 +52,17 @@ class NonRecyclablePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GuideHeroCard(
-              imagePath: 'assets/img/non_recyclable_waste.jpg',
+              imagePath: 'assets/img/non-recyclable_waste.jpg',
               badgeText: 'GUIDE',
               title: 'Landfill Guide',
               subtitle: 'Dispose of general waste safely.',
-              accentColor: AppTheme.secondaryColor1,
+              accentColor: AppTheme.accentColor,
             ),
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
 
             Text(
               "Items for Landfill",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.secondaryColor1),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.accentColor),
             ),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
 
@@ -70,29 +70,29 @@ class NonRecyclablePage extends StatelessWidget {
               title: "Sanitary Products & Diapers",
               description: "Used diapers, wipes, and feminine hygiene products.",
               icon: Icons.baby_changing_station_rounded,
-              iconColor: AppTheme.secondaryColor1,
-              iconBgColor: AppTheme.secondaryColor1.withValues(alpha: 0.1),
+              iconColor: AppTheme.accentColor,
+              iconBgColor: AppTheme.accentColor.withValues(alpha: 0.12),
             ),
             WasteItemTile(
               title: "Styrofoam & Polystyrene",
               description: "Takeout containers, packing peanuts, and foam cups.",
               icon: Icons.takeout_dining_rounded,
-              iconColor: AppTheme.secondaryColor1,
-              iconBgColor: AppTheme.secondaryColor1.withValues(alpha: 0.1),
+              iconColor: AppTheme.accentColor,
+              iconBgColor: AppTheme.accentColor.withValues(alpha: 0.12),
             ),
             WasteItemTile(
               title: "Contaminated Packaging",
               description: "Greasy pizza boxes, food-soaked wrappers, and soiled paper.",
               icon: Icons.fastfood_rounded,
-              iconColor: AppTheme.secondaryColor1,
-              iconBgColor: AppTheme.secondaryColor1.withValues(alpha: 0.1),
+              iconColor: AppTheme.accentColor,
+              iconBgColor: AppTheme.accentColor.withValues(alpha: 0.12),
             ),
             WasteItemTile(
               title: "Hazardous Materials",
               description: "Light bulbs, ceramics, mirrors, and specific medical waste.",
               icon: Icons.warning_rounded,
-              iconColor: AppTheme.secondaryColor1,
-              iconBgColor: AppTheme.secondaryColor1.withValues(alpha: 0.1),
+              iconColor: AppTheme.accentColor,
+              iconBgColor: AppTheme.accentColor.withValues(alpha: 0.12),
             ),
 
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
@@ -102,7 +102,7 @@ class NonRecyclablePage extends StatelessWidget {
               icon: Icons.lightbulb_rounded,
               iconColor: AppTheme.accentColor,
               bgColor: AppTheme.primaryBackground,
-              borderColor: AppTheme.secondaryColor1.withValues(alpha: 0.2),
+              borderColor: AppTheme.accentColor.withValues(alpha: 0.2),
               child: Column(
                 children: [
                   _buildTipRow(context, "Bag all loose items to prevent litter during collection."),

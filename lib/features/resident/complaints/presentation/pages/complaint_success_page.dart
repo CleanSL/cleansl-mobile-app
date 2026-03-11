@@ -13,11 +13,7 @@ class ComplaintSuccessPage extends StatelessWidget {
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -0.2),
-            radius: 1.2,
-            colors: [const Color(0xFFE8F5E9), AppTheme.primaryBackground],
-          ),
+          gradient: RadialGradient(center: const Alignment(0, -0.2), radius: 1.2, colors: [const Color(0xFFE8F5E9), AppTheme.primaryBackground]),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -45,7 +41,8 @@ class ComplaintSuccessPage extends StatelessWidget {
 
   Widget _buildAnimatedCheck() {
     return Container(
-      width: 120, height: 120,
+      width: 120,
+      height: 120,
       decoration: BoxDecoration(
         color: AppTheme.hoverColor,
         shape: BoxShape.circle,
@@ -58,17 +55,17 @@ class ComplaintSuccessPage extends StatelessWidget {
   Widget _buildDashboardButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.secondaryColor2,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).popUntil(ModalRoute.withName('/resident-main')),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(color: AppTheme.secondaryColor2, borderRadius: BorderRadius.circular(30)),
+          alignment: Alignment.center,
+          child: const Text(
+            "Back to Dashboard",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
-          child: const Text("Back to Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -77,11 +74,11 @@ class ComplaintSuccessPage extends StatelessWidget {
   Widget _buildReferencePill() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(20),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
+      child: Text(
+        "REFERENCE ID: #$referenceId",
+        style: TextStyle(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold),
       ),
-      child: Text("REFERENCE ID: #$referenceId", style: TextStyle(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold)),
     );
   }
 }

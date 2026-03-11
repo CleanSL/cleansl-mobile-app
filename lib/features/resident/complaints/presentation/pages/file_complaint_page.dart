@@ -30,6 +30,12 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
     _classifier.initialize();
   }
 
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleImageAction() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
 
@@ -42,13 +48,16 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
 
       final String? mlSuggestedCategory = await _classifier.classifyImage(pickedFile);
 
+      if (!mounted) return;
       setState(() {
         _isMLProcessing = false;
         if (mlSuggestedCategory != null && _issueCategories.contains(mlSuggestedCategory)) {
           _selectedCategory = mlSuggestedCategory;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("AI suggests: $mlSuggestedCategory")));
         }
       });
+      if (mlSuggestedCategory != null && _issueCategories.contains(mlSuggestedCategory)) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("AI suggests: $mlSuggestedCategory")));
+      }
     }
   }
 
@@ -72,31 +81,39 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("What's the problem?", style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900, color: AppTheme.secondaryColor2)),
+            Text(
+              "What's the problem?",
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900, color: AppTheme.secondaryColor2),
+            ),
             SizedBox(height: Responsive.h(context, 8)),
             Text("Help us keep Colombo clean by reporting missed pickups or illegal dumping.", style: TextStyle(color: AppTheme.textColor.withValues(alpha: 0.7), height: 1.5)),
             SizedBox(height: Responsive.h(context, 32)),
 
-            Text("Issue Category", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1)),
+            Text(
+              "Issue Category",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1),
+            ),
             SizedBox(height: Responsive.h(context, 8)),
             _buildDropdown(),
             SizedBox(height: Responsive.h(context, 24)),
 
-            Text("Description", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1)),
+            Text(
+              "Description",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1),
+            ),
             SizedBox(height: Responsive.h(context, 8)),
             _buildDescriptionField(),
             SizedBox(height: Responsive.h(context, 24)),
 
-            Text("Evidence", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1)),
-            SizedBox(height: Responsive.h(context, 8)),
-            
-            // Using extracted Widget
-            EvidencePicker(
-              image: _evidenceImage, 
-              onTap: _handleImageAction, 
-              isProcessing: _isMLProcessing
+            Text(
+              "Evidence",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1),
             ),
-            
+            SizedBox(height: Responsive.h(context, 8)),
+
+            // Using extracted Widget
+            EvidencePicker(image: _evidenceImage, onTap: _handleImageAction, isProcessing: _isMLProcessing),
+
             SizedBox(height: Responsive.h(context, 24)),
             _buildLocationBox(),
             SizedBox(height: Responsive.h(context, 40)),
@@ -140,7 +157,10 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Location", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1)),
+        Text(
+          "Location",
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: AppTheme.secondaryColor1),
+        ),
         SizedBox(height: Responsive.h(context, 8)),
         Container(
           padding: EdgeInsets.all(Responsive.w(context, AppTheme.space16)),
@@ -157,7 +177,10 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("CURRENT LOCATION", style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                    const Text(
+                      "CURRENT LOCATION",
+                      style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                    ),
                     SizedBox(height: Responsive.h(context, 4)),
                     Text("No. 45, Lotus Road, Colombo 01", style: TextStyle(color: AppTheme.textColor.withValues(alpha: 0.8), fontSize: 14)),
                   ],
@@ -178,7 +201,10 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ComplaintSuccessPage(referenceId: "CMC-89201")));
         },
         icon: const Icon(Icons.send_rounded, size: 18),
-        label: Text("Submit Report", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        label: Text(
+          "Submit Report",
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.accentColor,
           foregroundColor: Colors.white,

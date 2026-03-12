@@ -1,33 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
-import '../widgets/complaint_card.dart'; // New Import
+import '../../data/complaint_model.dart';
+import '../widgets/complaint_card.dart';
 import 'help_support_page.dart';
 import 'file_complaint_page.dart';
-
-class Complaint {
-  final String id;
-  final String title;
-  final DateTime date;
-  final String description;
-  final String status;
-  final String imagePath;
-  final bool isLocal;
-  final String? assignment;
-  final String? completionDate;
-
-  Complaint({
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.description,
-    required this.status,
-    required this.imagePath,
-    this.isLocal = false,
-    this.assignment,
-    this.completionDate,
-  });
-}
 
 class ComplaintsMainPage extends StatefulWidget {
   const ComplaintsMainPage({super.key});
@@ -44,29 +21,35 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
   final List<Complaint> _allComplaints = [
     Complaint(
       id: "8821",
-      title: "Missed Pickup",
-      date: DateTime(2023, 10, 12),
+      category: "Missed Pickup",
       status: "Pending",
-      description: "The trash collection truck skipped our block this morning...",
+      statusTitle: "Under Review",
+      statusDescription: "Our team is currently verifying your report. You can cancel if it was made in error.",
+      dateSubmitted: "Oct 12, 2023",
+      fullDescription: "The trash collection truck skipped our block this morning despite the scheduled pickup.",
       imagePath: 'assets/img/missed_pickup.jpg',
       isLocal: true,
     ),
     Complaint(
       id: "8795",
-      title: "Overflowing Bin",
-      date: DateTime(2023, 10, 10),
+      category: "Overflowing Bin",
       status: "In Progress",
-      description: "Public bin at the corner of 5th Ave is overflowing...",
+      statusTitle: "Team Assigned",
+      statusDescription: "A field team has been dispatched to resolve the issue.",
+      dateSubmitted: "Oct 10, 2023",
+      fullDescription: "Public bin at the corner of 5th Ave is overflowing and causing a health hazard.",
       imagePath: 'assets/img/overflowing_bin.jpg',
       isLocal: true,
-      assignment: "Assigned to Field Team B",
+      assignedTo: "Field Team B",
     ),
     Complaint(
       id: "8612",
-      title: "Broken Bin Lid",
-      date: DateTime(2023, 10, 05),
+      category: "Broken Bin Lid",
       status: "Resolved",
-      description: "The lid of my green recycling bin has snapped off...",
+      statusTitle: "Issue Resolved",
+      statusDescription: "The issue has been resolved. Thank you for helping us keep Colombo clean.",
+      dateSubmitted: "Oct 05, 2023",
+      fullDescription: "The lid of my green recycling bin has snapped off due to wear and tear.",
       imagePath: 'assets/img/broken_bin.jpg',
       isLocal: true,
       completionDate: "Oct 07",
@@ -94,7 +77,9 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
   void _handleSort() {
     setState(() {
       _isAscending = !_isAscending;
-      _allComplaints.sort((a, b) => _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date));
+      _allComplaints.sort((a, b) => _isAscending
+          ? a.id.compareTo(b.id)
+          : b.id.compareTo(a.id));
     });
   }
 
@@ -237,9 +222,6 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
       itemCount: items.length,
       itemBuilder: (context, index) => ComplaintCard(
         complaint: items[index],
-        onViewDetails: () {
-          // TODO: Navigate to Details page
-        },
       ),
     );
   }

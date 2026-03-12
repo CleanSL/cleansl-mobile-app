@@ -15,7 +15,6 @@ class ResidentSignUpPage extends StatefulWidget {
 }
 
 class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
-  // 2. Initialized the service, loading state, and all controllers
   final AuthService _authService = AuthService();
   bool _agreedToTerms = false;
   bool _isLoading = false;
@@ -26,7 +25,6 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
-  // Password complexity rules
   bool get _passwordIsValid {
     final pw = _passwordController.text;
     if (pw.length < 8) return false;
@@ -54,8 +52,6 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
 
   bool get _isMobileValid => _mobileController.text.trim().length == 9;
 
-  bool get _canSubmit => _isFullNameValid && _isMobileValid && _isEmailValid && _passwordIsValid && _passwordsMatch && _agreedToTerms;
-
   @override
   void initState() {
     super.initState();
@@ -68,7 +64,6 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
 
   @override
   void dispose() {
-    // Always dispose controllers to prevent memory leaks
     _fullNameController.dispose();
     _mobileController.dispose();
     _emailController.dispose();
@@ -78,6 +73,31 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
   }
 
   Future<void> _handleSignUp() async {
+    if (!_isFullNameValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Name can only contain letters.")));
+      return;
+    }
+    if (!_isMobileValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mobile number must be exactly 9 digits.")));
+      return;
+    }
+    if (!_isEmailValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid email address.")));
+      return;
+    }
+    if (!_passwordIsValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password does not meet requirements.")));
+      return;
+    }
+    if (!_passwordsMatch) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match.")));
+      return;
+    }
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You must agree to the Terms & Conditions.")));
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -137,7 +157,7 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text(
+                child: const Text(
                   "OK",
                   style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.w600),
                 ),
@@ -163,7 +183,6 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
       subtitle: "Please enter your details to create a new account.",
       topSpacing: AppTheme.space16,
       formChildren: [
-        // 3. Attached the controllers to your inputs!
         CleanSlTextInput(hintText: "Full Name", controller: _fullNameController),
         SizedBox(height: fieldGap),
 
@@ -177,7 +196,6 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
         SizedBox(height: fieldGap),
 
         CleanSlTextInput(hintText: "Confirm Password", isPassword: true, controller: _confirmPasswordController),
-
         SizedBox(height: fieldGap),
 
         Row(
@@ -224,7 +242,6 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
           ],
         ),
 
-        // Password rules hint
         if (_passwordController.text.isNotEmpty && !_passwordIsValid)
           Padding(
             padding: EdgeInsets.only(top: Responsive.h(context, 8), bottom: Responsive.h(context, 8)),
@@ -250,7 +267,7 @@ class _ResidentSignUpPageState extends State<ResidentSignUpPage> {
             : CleanSlButton(
                 text: "Sign Up",
                 variant: ButtonVariant.primary,
-                onPressed: _canSubmit ? _handleSignUp : null,
+                onPressed: _handleSignUp,
               ),
 
         SizedBox(height: smallGap),

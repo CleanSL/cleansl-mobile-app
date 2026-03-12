@@ -9,16 +9,17 @@ class CleanSlButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final ButtonVariant variant;
-  final double width;
+  final double?width;
   final Widget? icon; // Optional icon parameter
 
   const CleanSlButton({
     super.key,
-    required this.text,
+    required this.text, 
     required this.onPressed,
     this.variant = ButtonVariant.primary, // Defaults to primary if not specified
     this.width = double.infinity, // Defaults to full width
     this.icon,
+  
   });
 
   @override

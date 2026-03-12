@@ -61,6 +61,11 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _handleRefresh() async {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 2));

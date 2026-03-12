@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
-import '../../../../../core/services/auth_service.dart'; //  ADDED:backend service
+import '../../../../../core/services/auth_service.dart'; 
 import '../../../../../shared/widgets/cleansl_button.dart';
 import '../../../../../shared/widgets/cleansl_text_input.dart';
 import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
@@ -16,10 +16,8 @@ class ResidentLoginPage extends StatefulWidget {
 }
 
 class _ResidentLoginPageState extends State<ResidentLoginPage> {
-  // Teammate's original UI toggle
   bool _isEmailMode = false;
 
-  // 🟢 ADDED: Memory and Connection setup
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
@@ -27,7 +25,6 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // 🟢 ADDED: Cleanup to prevent memory leaks
   @override
   void dispose() {
     _emailController.dispose();
@@ -67,7 +64,7 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
+  Future<void> handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
       await _authService.signInWithGoogle();
@@ -89,8 +86,10 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
       subtitle: "Please enter your account details to continue making a difference in your community.",
       topSpacing: AppTheme.space16,
       formChildren: [
-        // 🟢 CHANGED: Removed 'const' and added your controllers to his inputs
-        _isEmailMode ? CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController) : CleanSlMobNumInput(controller: _mobileController),
+        _isEmailMode 
+            ? CleanSlTextInput(hintText: "Email", keyboardType: TextInputType.emailAddress, controller: _emailController) 
+            : CleanSlMobNumInput(controller: _mobileController),
+        
         SizedBox(height: gap),
 
         CleanSlTextInput(hintText: "Password", isPassword: true, controller: _passwordController),
@@ -110,7 +109,6 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
 
         SizedBox(height: gap),
 
-        // 🟢 CHANGED: Wrapped his button in your loading state and database logic
         _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.accentColor))
             : CleanSlButton(
@@ -142,7 +140,7 @@ class _ResidentLoginPageState extends State<ResidentLoginPage> {
             height: Responsive.h(context, 32),
             width: Responsive.w(context, 32),
           ),
-          onPressed: _handleGoogleSignIn,
+          onPressed: handleGoogleSignIn,
         ),
 
         SizedBox(height: gap),

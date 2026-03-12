@@ -14,16 +14,7 @@ class ActivityItem {
   final List<Map<IconData, String>> details;
   final String actionText;
 
-  ActivityItem({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-    required this.iconBgColor,
-    required this.category,
-    this.statusText,
-    required this.details,
-    required this.actionText,
-  });
+  ActivityItem({required this.title, required this.icon, required this.iconColor, required this.iconBgColor, required this.category, this.statusText, required this.details, required this.actionText});
 }
 
 class RecentActivityPage extends StatefulWidget {
@@ -58,7 +49,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       iconBgColor: Colors.orange.shade50,
       category: 'Reports',
       statusText: "IN PROGRESS",
-      details: [{Icons.numbers_rounded: "Reference ID: #CSL-88291"}],
+      details: [
+        {Icons.numbers_rounded: "Reference ID: #CSL-88291"},
+      ],
       actionText: "TRACK STATUS",
     ),
     ActivityItem(
@@ -67,7 +60,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       iconColor: Colors.blue.shade600,
       iconBgColor: Colors.blue.shade50,
       category: 'Pickups',
-      details: [{Icons.calendar_today_rounded: "Oct 22, 2023 • 07:30 AM"}],
+      details: [
+        {Icons.calendar_today_rounded: "Oct 22, 2023 • 07:30 AM"},
+      ],
       actionText: "RECEIPT",
     ),
     ActivityItem(
@@ -77,7 +72,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       iconBgColor: AppTheme.accentColor.withValues(alpha: 0.15),
       category: 'Reports',
       statusText: "RESOLVED",
-      details: [{Icons.verified_rounded: "Action: Lid Replaced"}],
+      details: [
+        {Icons.verified_rounded: "Action: Lid Replaced"},
+      ],
       actionText: "FEEDBACK",
     ),
   ];
@@ -105,10 +102,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
         toolbarHeight: Responsive.h(context, AppTheme.space64),
         title: Text(
           "Recent Activity",
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textColor,
-              ),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
         ),
         // FIXED: Removed white circle background from back button
         leading: IconButton(
@@ -133,15 +127,15 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
 
           // SCROLLABLE LIST (Dynamic)
           Expanded(
-            child: _filteredActivities.isEmpty 
-              ? _buildEmptyState() 
-              : ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, AppTheme.space24)),
-                  itemCount: _filteredActivities.length,
-                  itemBuilder: (context, index) {
-                    return _buildActivityCard(context, _filteredActivities[index]);
-                  },
-                ),
+            child: _filteredActivities.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, AppTheme.space24)),
+                    itemCount: _filteredActivities.length,
+                    itemBuilder: (context, index) {
+                      return _buildActivityCard(context, _filteredActivities[index]);
+                    },
+                  ),
           ),
         ],
       ),
@@ -176,34 +170,37 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, AppTheme.space24)),
       child: Row(
-        children: ['All', 'Pickups', 'Reports'].map((filter) => 
-          Padding(
-            padding: EdgeInsets.only(right: Responsive.w(context, 12)),
-            child: _buildFilterChip(filter),
-          )
-        ).toList(),
+        children: [
+          _buildFilterChip(label: 'All', icon: Icons.done_all_rounded, isSelected: _selectedFilter == 'All'),
+          SizedBox(width: Responsive.w(context, 12)),
+          _buildFilterChip(label: 'Pickups', icon: Icons.local_shipping_rounded, isSelected: _selectedFilter == 'Pickups'),
+          SizedBox(width: Responsive.w(context, 12)),
+          _buildFilterChip(label: 'Reports', icon: Icons.warning_rounded, isSelected: _selectedFilter == 'Reports'),
+        ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    bool isSelected = _selectedFilter == label;
+  Widget _buildFilterChip({required String label, required IconData icon, required bool isSelected}) {
     return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = label), // TRIGGER FILTER
+      onTap: () => setState(() => _selectedFilter = label),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 20), vertical: Responsive.h(context, 10)),
+        padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 16), vertical: Responsive.h(context, 10)),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.accentColor : Colors.white,
+          color: isSelected ? AppTheme.textColor : Colors.white,
           borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
-          border: Border.all(color: isSelected ? AppTheme.accentColor : Colors.grey.shade300),
+          border: Border.all(color: isSelected ? AppTheme.textColor : Colors.grey.shade300, width: 1),
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isSelected ? Colors.white : AppTheme.secondaryColor1.withValues(alpha: 0.8),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-              ),
+        child: Row(
+          children: [
+            Icon(icon, size: Responsive.w(context, 18), color: isSelected ? Colors.white : Colors.blueGrey.shade400),
+            SizedBox(width: Responsive.w(context, 8)),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isSelected ? Colors.white : Colors.blueGrey.shade600, fontWeight: isSelected ? FontWeight.bold : FontWeight.w600),
+            ),
+          ],
         ),
       ),
     );
@@ -234,11 +231,11 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor)),
-                    if (item.statusText != null) ...[
-                      SizedBox(height: Responsive.h(context, 8)),
-                      _buildStatusPill(item.statusText!, item.iconColor, item.iconBgColor),
-                    ],
+                    Text(
+                      item.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
+                    ),
+                    if (item.statusText != null) ...[SizedBox(height: Responsive.h(context, 8)), _buildStatusPill(item.statusText!, item.iconColor, item.iconBgColor)],
                     SizedBox(height: Responsive.h(context, 12)),
                     // Map details list to detail rows
                     ...item.details.map((detail) {
@@ -251,12 +248,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
             ],
           ),
           SizedBox(height: Responsive.h(context, 16)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _buildActionButton(item.actionText, () {}),
-            ],
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.end, children: [_buildActionButton(item.actionText, () {})]),
         ],
       ),
     );
@@ -268,7 +260,10 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 8), vertical: Responsive.h(context, 4)),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(Responsive.r(context, 6))),
-      child: Text(text, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.bold)),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
@@ -291,15 +286,17 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 16), vertical: Responsive.h(context, 8)),
         decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(Responsive.r(context, 20))),
-        child: Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold)),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
-      child: Text("No activities found matching your criteria.", 
-        style: TextStyle(color: Colors.grey.shade500)),
+      child: Text("No activities found matching your criteria.", style: TextStyle(color: Colors.grey.shade500)),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 
 class AuthService {
+  // The global Supabase connection
   final _supabase = Supabase.instance.client;
 
   // ==========================================
@@ -23,18 +24,16 @@ class AuthService {
     final user = response.user;
 
     if (user != null) {
-      // Step A: Insert into the newly named 'users' table
       await _supabase.from('users').insert({
         'id': user.id,
         'role': 'resident', 
         'full_name': fullName,
-        'phone_number': mobile, // Matches new schema
-        'email': email,         // Requires the SQL fix above!
+        'phone_number': mobile, 
+        'email': email, 
       });
 
-      // Step B: Initialize their specific 'resident_profiles' row
       await _supabase.from('resident_profiles').insert({
-        'user_id': user.id,     // Matches new schema
+        'user_id': user.id,
         'total_points': 0,
       });
     }
@@ -51,7 +50,7 @@ class AuthService {
           .from('users')
           .select('email')
           .eq('email', identifier)
-          .eq('role', 'resident')
+          .eq('role', 'resident') 
           .maybeSingle();
 
       if (response == null) {
@@ -61,7 +60,7 @@ class AuthService {
       final response = await _supabase
           .from('users')
           .select('email')
-          .eq('phone_number', identifier) // Matches new schema
+          .eq('phone_number', identifier) 
           .eq('role', 'resident')
           .maybeSingle();
 
@@ -85,21 +84,28 @@ class AuthService {
   }
 
   // ==========================================
-  // GOOGLE AUTHENTICATION 
+  // GOOGLE AUTHENTICATION (v7.2.0 COMPLIANT)
   // ==========================================
 
   Future<void> signInWithGoogle() async {
     final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
-    if (webClientId == null) throw Exception('Missing GOOGLE_WEB_CLIENT_ID in .env file');
+    
+    if (webClientId == null) {
+      throw Exception('Missing GOOGLE_WEB_CLIENT_ID in .env file');
+    }
 
     final GoogleSignIn googleSignIn = GoogleSignIn.instance;
-    await googleSignIn.initialize(clientId: webClientId, serverClientId: webClientId);
+    await googleSignIn.initialize(
+      clientId: webClientId,       
+      serverClientId: webClientId, 
+    );
 
     final scopes = ['email', 'profile'];
+
     await googleSignIn.signOut();
     final googleUser = await googleSignIn.authenticate(scopeHint: scopes);
 
-    if (googleUser == null) return;
+    if (googleUser == null) return; 
 
     final authorization = await googleUser.authorizationClient.authorizationForScopes(scopes) ?? 
                           await googleUser.authorizationClient.authorizeScopes(scopes);
@@ -107,7 +113,9 @@ class AuthService {
     final idToken = googleUser.authentication.idToken;
     final accessToken = authorization.accessToken;
 
-    if (idToken == null || accessToken == null) throw Exception('Failed to get secure tokens from Google.');
+    if (idToken == null) {
+      throw Exception('Failed to retrieve Google ID token.');
+    }
 
     final response = await _supabase.auth.signInWithIdToken(
       provider: OAuthProvider.google,
@@ -116,8 +124,8 @@ class AuthService {
     );
 
     final user = response.user;
+    
     if (user != null) {
-      // Check if this Google user is already in the new schema
       final existingUser = await _supabase
           .from('users')
           .select('id')
@@ -125,7 +133,6 @@ class AuthService {
           .maybeSingle();
 
       if (existingUser == null) {
-        // Automatically save new Google users to the new database structure
         await _supabase.from('users').insert({
           'id': user.id,
           'role': 'resident',
@@ -149,7 +156,7 @@ class AuthService {
     final driverCheck = await _supabase
         .from('users')
         .select('id')
-        .eq('phone_number', mobile) // Matches new schema
+        .eq('phone_number', mobile)
         .eq('role', 'driver')
         .maybeSingle();
 

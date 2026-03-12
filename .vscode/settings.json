@@ -136,5 +136,6 @@
 
     },
     "dart.analyzerPath": null,
-    "dart.lineLength": 200
+    "dart.lineLength": 200,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

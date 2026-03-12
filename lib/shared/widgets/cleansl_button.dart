@@ -12,14 +12,14 @@ class CleanSlButton extends StatelessWidget {
   final double?width;
   final Widget? icon; // Optional icon parameter
 
-// ✅ CHANGE IT TO LOOK EXACTLY LIKE THIS:
-  const CleanSlButton({ 
+  const CleanSlButton({
     super.key,
     required this.text, 
     required this.onPressed,
-    this.variant = ButtonVariant.primary,
+    this.variant = ButtonVariant.primary, // Defaults to primary if not specified
+    this.width = double.infinity, // Defaults to full width
     this.icon,
-    this.width,
+  
   });
 
   @override
@@ -46,10 +46,7 @@ class CleanSlButton extends StatelessWidget {
       case ButtonVariant.outline:
         bgColor = Colors.transparent;
         textColor = AppTheme.secondaryColor1;
-        borderSide = const BorderSide(
-          color: AppTheme.secondaryColor1,
-          width: 2,
-        );
+        borderSide = const BorderSide(color: AppTheme.secondaryColor1, width: 2);
         break;
       case ButtonVariant.text:
         bgColor = Colors.transparent;
@@ -70,15 +67,8 @@ class CleanSlButton extends StatelessWidget {
       shadowColor: shadowColor,
       elevation: elevation,
       padding: EdgeInsets.symmetric(vertical: vPad, horizontal: hPad),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(radius),
-        side: borderSide,
-      ),
-      textStyle: TextStyle(
-        fontSize: fontSize,
-        fontWeight: FontWeight.w600,
-        fontFamily: 'Inter',
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: borderSide),
+      textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600, fontFamily: 'Inter'),
     );
 
     return SizedBox(
@@ -90,14 +80,9 @@ class CleanSlButton extends StatelessWidget {
         child: SizedBox(
           height: iconHeight,
           child: Row(
-            mainAxisAlignment: icon != null
-                ? MainAxisAlignment.start
-                : MainAxisAlignment.center,
+            mainAxisAlignment: icon != null ? MainAxisAlignment.start : MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[
-                icon!,
-                SizedBox(width: Responsive.w(context, 24)),
-              ],
+              if (icon != null) ...[icon!, SizedBox(width: Responsive.w(context, 24))],
               Text(text),
             ],
           ),

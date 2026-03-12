@@ -42,7 +42,7 @@ class _ForgotPasswordVerifyPageState extends State<ForgotPasswordVerifyPage> {
           variant: ButtonVariant.primary,
           onPressed: _otp.length == 4
               ? () {
-                  // TODO: Backend teammate will add actual code verification here
+                  //TODO: Backend teammate will add actual code verification here
                   Navigator.pushReplacementNamed(context, '/reset-password');
                 }
               : null,

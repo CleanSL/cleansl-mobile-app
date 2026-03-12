@@ -1,10 +1,16 @@
+import 'package:cleansl_app/shared/widgets/cleansl_button.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
 
-class ResidentHomePage extends StatelessWidget {
+class ResidentHomePage extends StatefulWidget {
   const ResidentHomePage({super.key});
 
+  @override
+  State<ResidentHomePage> createState() => _ResidentHomePageState();
+}
+
+class _ResidentHomePageState extends State<ResidentHomePage> {
   @override
   Widget build(BuildContext context) {
     // We use a SafeArea and SingleChildScrollView so the content doesn't hit the notch

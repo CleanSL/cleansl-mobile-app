@@ -1,33 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
-import '../widgets/complaint_card.dart'; // New Import
+import '../../data/complaint_model.dart';
+import '../widgets/complaint_card.dart';
 import 'help_support_page.dart';
 import 'file_complaint_page.dart';
-
-class Complaint {
-  final String id;
-  final String title;
-  final DateTime date;
-  final String description;
-  final String status;
-  final String imagePath;
-  final bool isLocal;
-  final String? assignment;
-  final String? completionDate;
-
-  Complaint({
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.description,
-    required this.status,
-    required this.imagePath,
-    this.isLocal = false,
-    this.assignment,
-    this.completionDate,
-  });
-}
 
 class ComplaintsMainPage extends StatefulWidget {
   const ComplaintsMainPage({super.key});
@@ -36,37 +13,43 @@ class ComplaintsMainPage extends StatefulWidget {
   State<ComplaintsMainPage> createState() => _ComplaintsMainPageState();
 }
 
-class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
+  String _selectedFilter = 'All';
   bool _isLoading = false;
   bool _isAscending = false;
 
   final List<Complaint> _allComplaints = [
     Complaint(
       id: "8821",
-      title: "Missed Pickup",
-      date: DateTime(2023, 10, 12),
+      category: "Missed Pickup",
       status: "Pending",
-      description: "The trash collection truck skipped our block this morning...",
+      statusTitle: "Under Review",
+      statusDescription: "Our team is currently verifying your report. You can cancel if it was made in error.",
+      dateSubmitted: "Oct 12, 2023",
+      fullDescription: "The trash collection truck skipped our block this morning despite the scheduled pickup.",
       imagePath: 'assets/img/missed_pickup.jpg',
       isLocal: true,
     ),
     Complaint(
       id: "8795",
-      title: "Overflowing Bin",
-      date: DateTime(2023, 10, 10),
+      category: "Overflowing Bin",
       status: "In Progress",
-      description: "Public bin at the corner of 5th Ave is overflowing...",
+      statusTitle: "Team Assigned",
+      statusDescription: "A field team has been dispatched to resolve the issue.",
+      dateSubmitted: "Oct 10, 2023",
+      fullDescription: "Public bin at the corner of 5th Ave is overflowing and causing a health hazard.",
       imagePath: 'assets/img/overflowing_bin.jpg',
       isLocal: true,
-      assignment: "Assigned to Field Team B",
+      assignedTo: "Field Team B",
     ),
     Complaint(
       id: "8612",
-      title: "Broken Bin Lid",
-      date: DateTime(2023, 10, 05),
+      category: "Broken Bin Lid",
       status: "Resolved",
-      description: "The lid of my green recycling bin has snapped off...",
+      statusTitle: "Issue Resolved",
+      statusDescription: "The issue has been resolved. Thank you for helping us keep Colombo clean.",
+      dateSubmitted: "Oct 05, 2023",
+      fullDescription: "The lid of my green recycling bin has snapped off due to wear and tear.",
       imagePath: 'assets/img/broken_bin.jpg',
       isLocal: true,
       completionDate: "Oct 07",
@@ -76,22 +59,22 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
   }
 
   Future<void> _handleRefresh() async {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
     setState(() => _isLoading = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("List updated successfully")));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("List updated successfully")));
   }
 
   void _handleSort() {
     setState(() {
       _isAscending = !_isAscending;
-      _allComplaints.sort((a, b) => _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date));
+      _allComplaints.sort((a, b) => _isAscending
+          ? a.id.compareTo(b.id)
+          : b.id.compareTo(a.id));
     });
   }
 
@@ -104,10 +87,7 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTick
         elevation: 0,
         centerTitle: true,
         title: Text("My Complaints", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textColor),
-        ),
+        automaticallyImplyLeading: false,
         actions: [
           PopupMenuButton<String>(
             elevation: 10,
@@ -131,22 +111,15 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTick
             ],
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppTheme.accentColor,
-          labelColor: AppTheme.accentColor,
-          unselectedLabelColor: Colors.grey,
-          tabs: const [Tab(text: "All"), Tab(text: "Active"), Tab(text: "Resolved")],
-        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
+          : Column(
               children: [
-                _buildComplaintList(_allComplaints),
-                _buildComplaintList(_allComplaints.where((c) => c.status != "Resolved").toList()),
-                _buildComplaintList(_allComplaints.where((c) => c.status == "Resolved").toList()),
+                SizedBox(height: Responsive.h(context, AppTheme.space16)),
+                _buildFiltersRow(),
+                SizedBox(height: Responsive.h(context, AppTheme.space16)),
+                Expanded(child: _buildComplaintList(_filtered())),
               ],
             ),
       floatingActionButton: Padding(
@@ -158,6 +131,60 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTick
           backgroundColor: AppTheme.accentColor,
           shape: const CircleBorder(),
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 36),
+        ),
+      ),
+    );
+  }
+
+  List<Complaint> _filtered() {
+    if (_selectedFilter == 'Active') {
+      return _allComplaints.where((c) => c.status != 'Resolved').toList();
+    }
+    if (_selectedFilter == 'Resolved') {
+      return _allComplaints.where((c) => c.status == 'Resolved').toList();
+    }
+    return _allComplaints;
+  }
+
+  Widget _buildFiltersRow() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, AppTheme.space24)),
+      child: Row(
+        children: [
+          _buildFilterChip(label: "All", icon: Icons.done_all_rounded, isSelected: _selectedFilter == 'All'),
+          SizedBox(width: Responsive.w(context, 12)),
+          _buildFilterChip(label: "Active", icon: Icons.pending_rounded, isSelected: _selectedFilter == 'Active'),
+          SizedBox(width: Responsive.w(context, 12)),
+          _buildFilterChip(label: "Resolved", icon: Icons.check_circle_rounded, isSelected: _selectedFilter == 'Resolved'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({required String label, required IconData icon, required bool isSelected}) {
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 16), vertical: Responsive.h(context, 10)),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.textColor : Colors.white,
+          borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
+          border: Border.all(color: isSelected ? AppTheme.textColor : Colors.grey.shade300, width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: Responsive.w(context, 18), color: isSelected ? Colors.white : Colors.blueGrey.shade400),
+            SizedBox(width: Responsive.w(context, 8)),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isSelected ? Colors.white : Colors.blueGrey.shade600,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -190,9 +217,6 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> with SingleTick
       itemCount: items.length,
       itemBuilder: (context, index) => ComplaintCard(
         complaint: items[index],
-        onViewDetails: () {
-          // TODO: Navigate to Details page
-        },
       ),
     );
   }

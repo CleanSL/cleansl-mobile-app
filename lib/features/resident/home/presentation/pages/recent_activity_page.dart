@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../../../complaints/data/complaint_model.dart';
+import '../../../complaints/presentation/pages/complaint_details_page.dart';
 
 // --- 1. DATA MODEL ---
 // This represents a single activity. Later, Husni's backend will provide this data.
@@ -13,8 +15,19 @@ class ActivityItem {
   final String? statusText;
   final List<Map<IconData, String>> details;
   final String actionText;
+  final Complaint? complaint;
 
-  ActivityItem({required this.title, required this.icon, required this.iconColor, required this.iconBgColor, required this.category, this.statusText, required this.details, required this.actionText});
+  ActivityItem({
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+    required this.category,
+    this.statusText,
+    required this.details,
+    required this.actionText,
+    this.complaint,
+  });
 }
 
 class RecentActivityPage extends StatefulWidget {
@@ -43,16 +56,28 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       actionText: "VIEW DETAILS",
     ),
     ActivityItem(
-      title: "Issue Reported: Missed Bin",
+      title: "Issue Reported: Overflowing Bin",
       icon: Icons.warning_rounded,
       iconColor: Colors.orange.shade700,
       iconBgColor: Colors.orange.shade50,
       category: 'Reports',
       statusText: "IN PROGRESS",
       details: [
-        {Icons.numbers_rounded: "Reference ID: #CSL-88291"},
+        {Icons.numbers_rounded: "Reference ID: #8795"},
       ],
       actionText: "TRACK STATUS",
+      complaint: Complaint(
+        id: "8795",
+        category: "Overflowing Bin",
+        status: "In Progress",
+        statusTitle: "Team Assigned",
+        statusDescription: "A field team has been dispatched to resolve the issue.",
+        dateSubmitted: "Oct 10, 2023",
+        fullDescription: "Public bin at the corner of 5th Ave is overflowing and causing a health hazard.",
+        imagePath: 'assets/img/overflowing_bin.jpg',
+        isLocal: true,
+        assignedTo: "Field Team B",
+      ),
     ),
     ActivityItem(
       title: "General Waste Collected",
@@ -66,16 +91,28 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       actionText: "RECEIPT",
     ),
     ActivityItem(
-      title: "Report Resolved: Broken Bin Lid",
+      title: "Report Resolved: Broken Bin",
       icon: Icons.check_circle_rounded,
       iconColor: AppTheme.accentColor,
       iconBgColor: AppTheme.accentColor.withValues(alpha: 0.15),
       category: 'Reports',
       statusText: "RESOLVED",
       details: [
-        {Icons.verified_rounded: "Action: Lid Replaced"},
+        {Icons.verified_rounded: "Action: Bin Replaced"},
       ],
       actionText: "FEEDBACK",
+      complaint: Complaint(
+        id: "8612",
+        category: "Broken Bin",
+        status: "Resolved",
+        statusTitle: "Replacement Completed",
+        statusDescription: "A replacement bin has been delivered and the damaged bin collected.",
+        dateSubmitted: "Oct 05, 2023",
+        fullDescription: "My household bin has a large crack along the side and a broken wheel, making it unusable.",
+        imagePath: 'assets/img/broken_bin.jpg',
+        isLocal: true,
+        completionDate: "Oct 07",
+      ),
     ),
   ];
 
@@ -207,49 +244,58 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
   }
 
   Widget _buildActivityCard(BuildContext context, ActivityItem item) {
-    return Container(
-      margin: EdgeInsets.only(bottom: Responsive.h(context, AppTheme.space16)),
-      padding: EdgeInsets.all(Responsive.w(context, 20)),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    final onTap = item.complaint == null ? null : () => _openComplaintDetails(context, item.complaint!);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Container(
+          margin: EdgeInsets.only(bottom: Responsive.h(context, AppTheme.space16)),
+          padding: EdgeInsets.all(Responsive.w(context, 20)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.all(Responsive.w(context, 12)),
-                decoration: BoxDecoration(color: item.iconBgColor, shape: BoxShape.circle),
-                child: Icon(item.icon, color: item.iconColor, size: Responsive.w(context, 24)),
-              ),
-              SizedBox(width: Responsive.w(context, 16)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(Responsive.w(context, 12)),
+                    decoration: BoxDecoration(color: item.iconBgColor, shape: BoxShape.circle),
+                    child: Icon(item.icon, color: item.iconColor, size: Responsive.w(context, 24)),
+                  ),
+                  SizedBox(width: Responsive.w(context, 16)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
+                        ),
+                        if (item.statusText != null) ...[SizedBox(height: Responsive.h(context, 8)), _buildStatusPill(item.statusText!, item.iconColor, item.iconBgColor)],
+                        SizedBox(height: Responsive.h(context, 12)),
+                        // Map details list to detail rows
+                        ...item.details.map((detail) {
+                          final entry = detail.entries.first;
+                          return _buildDetailRow(entry.key, entry.value);
+                        }),
+                      ],
                     ),
-                    if (item.statusText != null) ...[SizedBox(height: Responsive.h(context, 8)), _buildStatusPill(item.statusText!, item.iconColor, item.iconBgColor)],
-                    SizedBox(height: Responsive.h(context, 12)),
-                    // Map details list to detail rows
-                    ...item.details.map((detail) {
-                      final entry = detail.entries.first;
-                      return _buildDetailRow(entry.key, entry.value);
-                    }),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              SizedBox(height: Responsive.h(context, 16)),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: [_buildActionButton(item.actionText, onTap)]),
             ],
           ),
-          SizedBox(height: Responsive.h(context, 16)),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [_buildActionButton(item.actionText, () {})]),
-        ],
+        ),
       ),
     );
   }
@@ -280,7 +326,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
     );
   }
 
-  Widget _buildActionButton(String text, VoidCallback onTap) {
+  Widget _buildActionButton(String text, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -298,5 +344,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
     return Center(
       child: Text("No activities found matching your criteria.", style: TextStyle(color: Colors.grey.shade500)),
     );
+  }
+
+  void _openComplaintDetails(BuildContext context, Complaint complaint) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ComplaintDetailsPage(complaint: complaint)));
   }
 }

@@ -30,7 +30,10 @@ class ResolvedComplaintView extends StatelessWidget {
                       children: [
                         const Icon(Icons.circle, color: AppTheme.accentColor, size: 10),
                         const SizedBox(width: 8),
-                        Text("Status: Resolved", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold)),
+                        Text(
+                          "Status: Resolved",
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -40,7 +43,10 @@ class ResolvedComplaintView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(color: AppTheme.accentColor, borderRadius: BorderRadius.circular(20)),
-                  child: const Text("FIXED", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: const Text(
+                    "FIXED",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -53,10 +59,17 @@ class ResolvedComplaintView extends StatelessWidget {
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade200)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
                   child: Column(
                     children: [
-                      Text("COMPLAINT ID", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+                      Text(
+                        "COMPLAINT ID",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                      ),
                       const SizedBox(height: 4),
                       Text("#${complaint.id}", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     ],
@@ -67,12 +80,19 @@ class ResolvedComplaintView extends StatelessWidget {
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade200)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
                   child: Column(
                     children: [
-                      Text("CATEGORY", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+                      Text(
+                        "CATEGORY",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                      ),
                       const SizedBox(height: 4),
-                      Text(complaint.category.split(' ').first, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(complaint.category, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -106,7 +126,10 @@ class ResolvedComplaintView extends StatelessWidget {
                     const Icon(Icons.location_on_outlined, size: 15, color: AppTheme.accentColor),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text("Reported in District 4 · 4th Avenue, Green Park Area", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12, color: AppTheme.textColor.withValues(alpha: 0.65))),
+                      child: Text(
+                        "Reported in District 4 · Residential collection zone",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12, color: AppTheme.textColor.withValues(alpha: 0.65)),
+                      ),
                     ),
                   ],
                 ),
@@ -117,7 +140,10 @@ class ResolvedComplaintView extends StatelessWidget {
                     const Icon(Icons.person_outline_rounded, size: 15, color: AppTheme.accentColor),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text("Resolved by CleanSL Field Team · Staff #442", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12, color: AppTheme.textColor.withValues(alpha: 0.65))),
+                      child: Text(
+                        "Resolved by CleanSL Field Team · Staff #442",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12, color: AppTheme.textColor.withValues(alpha: 0.65)),
+                      ),
                     ),
                   ],
                 ),
@@ -135,7 +161,8 @@ class ResolvedComplaintView extends StatelessWidget {
               children: [
                 Image.asset(complaint.imagePath, width: double.infinity, height: 180, fit: BoxFit.cover),
                 Positioned(
-                  top: 12, left: 12,
+                  top: 12,
+                  left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(8)),
@@ -172,8 +199,11 @@ class ResolvedComplaintView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Cleared Area", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Verified by CleanSL Staff #442", style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+                      const Text(
+                        "Bin Replaced",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text("Verified by CleanSL Field Team", style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
                     ],
                   ),
                 ),
@@ -182,7 +212,7 @@ class ResolvedComplaintView extends StatelessWidget {
           ),
           SizedBox(height: Responsive.h(context, AppTheme.space24)),
           Text(
-            "\"The area has been thoroughly cleared and sanitized. A 'No Dumping' sign has been installed nearby to prevent future occurrences.\"",
+            "\"The damaged bin was collected and a replacement was delivered. The new bin was checked before handover.\"",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic, color: AppTheme.textColor.withValues(alpha: 0.7), height: 1.5),
           ),
           SizedBox(height: Responsive.h(context, AppTheme.space48)),

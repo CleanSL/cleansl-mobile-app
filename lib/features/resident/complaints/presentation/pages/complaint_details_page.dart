@@ -17,10 +17,7 @@ class ComplaintDetailsPage extends StatelessWidget {
       backgroundColor: AppTheme.primaryBackground,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(child: _buildBodyContent(context)),
-      
-      // Dynamic Bottom Navigation for "In Progress" Call/Comment buttons
-      bottomNavigationBar: complaint.status == "In Progress" ? _buildInProgressBottomBar(context) : null,
-      
+
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         child: FloatingActionButton(
@@ -64,35 +61,5 @@ class ComplaintDetailsPage extends StatelessWidget {
       default:
         return const Center(child: Text("Status Unknown"));
     }
-  }
-
-  // --- BOTTOM BAR FOR IN PROGRESS ---
-  Widget _buildInProgressBottomBar(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(AppTheme.space24, AppTheme.space16, AppTheme.space24, AppTheme.space24 + MediaQuery.of(context).padding.bottom),
-      decoration: const BoxDecoration(color: AppTheme.primaryBackground),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentColor,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                elevation: 0,
-              ),
-              child: const Text("Add Comment", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-          ),
-          const SizedBox(width: AppTheme.space16),
-          Container(
-            padding: const EdgeInsets.all(AppTheme.space16),
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-            child: const Icon(Icons.phone_in_talk_rounded, color: AppTheme.secondaryColor1),
-          ),
-        ],
-      ),
-    );
   }
 }

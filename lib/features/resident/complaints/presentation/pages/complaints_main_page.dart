@@ -44,12 +44,12 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
     ),
     Complaint(
       id: "8612",
-      category: "Broken Bin Lid",
+      category: "Broken Bin",
       status: "Resolved",
-      statusTitle: "Issue Resolved",
-      statusDescription: "The issue has been resolved. Thank you for helping us keep Colombo clean.",
+      statusTitle: "Replacement Completed",
+      statusDescription: "A replacement bin has been delivered and the damaged bin collected.",
       dateSubmitted: "Oct 05, 2023",
-      fullDescription: "The lid of my green recycling bin has snapped off due to wear and tear.",
+      fullDescription: "My household bin has a large crack along the side and a broken wheel, making it unusable.",
       imagePath: 'assets/img/broken_bin.jpg',
       isLocal: true,
       completionDate: "Oct 07",
@@ -77,9 +77,7 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
   void _handleSort() {
     setState(() {
       _isAscending = !_isAscending;
-      _allComplaints.sort((a, b) => _isAscending
-          ? a.id.compareTo(b.id)
-          : b.id.compareTo(a.id));
+      _allComplaints.sort((a, b) => _isAscending ? a.id.compareTo(b.id) : b.id.compareTo(a.id));
     });
   }
 
@@ -184,10 +182,7 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
             SizedBox(width: Responsive.w(context, 8)),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isSelected ? Colors.white : Colors.blueGrey.shade600,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isSelected ? Colors.white : Colors.blueGrey.shade600, fontWeight: isSelected ? FontWeight.bold : FontWeight.w600),
             ),
           ],
         ),
@@ -220,9 +215,7 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
         bottom: Responsive.h(context, AppTheme.space16) + MediaQuery.of(context).padding.bottom,
       ),
       itemCount: items.length,
-      itemBuilder: (context, index) => ComplaintCard(
-        complaint: items[index],
-      ),
+      itemBuilder: (context, index) => ComplaintCard(complaint: items[index]),
     );
   }
 }

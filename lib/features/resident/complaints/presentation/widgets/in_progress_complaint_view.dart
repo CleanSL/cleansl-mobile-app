@@ -26,7 +26,10 @@ class InProgressComplaintView extends StatelessWidget {
               children: const [
                 Icon(Icons.schedule_rounded, color: Colors.white, size: 14),
                 SizedBox(width: 6),
-                Text("In Progress", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                Text(
+                  "In Progress",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -42,15 +45,17 @@ class InProgressComplaintView extends StatelessWidget {
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppTheme.space24)),
             child: Column(
               children: [
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.analytics_outlined, color: AppTheme.accentColor, size: 18),
-                  ),
-                  const SizedBox(width: 12),
-                  Text("Status Timeline", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16)),
-                ]),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.analytics_outlined, color: AppTheme.accentColor, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Text("Status Timeline", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16)),
+                  ],
+                ),
                 SizedBox(height: Responsive.h(context, AppTheme.space24)),
                 const StatusTimelineStep(title: "Submitted", sub: "Oct 24, 2023 • 09:15 AM", isDone: true, showLine: true, icon: Icons.check),
                 const StatusTimelineStep(title: "Field Team Assigned", sub: "Oct 24, 2023 • 11:30 AM", isDone: true, showLine: true, icon: Icons.people),
@@ -91,19 +96,7 @@ class InProgressComplaintView extends StatelessWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
-                  child: Column(
-                    children: [
-                      Text(complaint.fullDescription, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
-                      SizedBox(height: Responsive.h(context, AppTheme.space24)),
-                      Row(
-                        children: [
-                          const Icon(Icons.map_rounded, color: AppTheme.accentColor, size: 22),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text("View on map: 4th Avenue, Green Park Area", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.accentColor, fontWeight: FontWeight.bold))),
-                        ],
-                      )
-                    ],
-                  ),
+                  child: Column(children: [Text(complaint.fullDescription, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5))]),
                 ),
               ],
             ),

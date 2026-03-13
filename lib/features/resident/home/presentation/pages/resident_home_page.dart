@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
+import '../../../complaints/data/complaint_model.dart';
+import '../../../complaints/presentation/pages/complaint_details_page.dart';
 import '../../../complaints/presentation/pages/file_complaint_page.dart';
 import '../../../guide/presentation/pages/guide_main_page.dart';
 import 'notifications_page.dart';
@@ -368,7 +370,29 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
           bgColor: AppTheme.accentColor.withValues(alpha: 0.1),
         ),
         SizedBox(height: Responsive.h(context, AppTheme.space16)),
-        _buildActivityTile(context, title: "Issue Reported: Missed Bin", date: "Mon, 14 Aug", icon: Icons.history_rounded, iconColor: Colors.orange, bgColor: Colors.orange.withValues(alpha: 0.1)),
+        _buildActivityTile(
+          context,
+          title: "Issue Reported: Overflowing Bin",
+          date: "Mon, 14 Aug",
+          icon: Icons.history_rounded,
+          iconColor: Colors.orange,
+          bgColor: Colors.orange.withValues(alpha: 0.1),
+          onTap: () => _openComplaintDetails(
+            context,
+            Complaint(
+              id: "8795",
+              category: "Overflowing Bin",
+              status: "In Progress",
+              statusTitle: "Team Assigned",
+              statusDescription: "A field team has been dispatched to resolve the issue.",
+              dateSubmitted: "Oct 10, 2023",
+              fullDescription: "Public bin at the corner of 5th Ave is overflowing and causing a health hazard.",
+              imagePath: 'assets/img/overflowing_bin.jpg',
+              isLocal: true,
+              assignedTo: "Field Team B",
+            ),
+          ),
+        ),
         SizedBox(height: Responsive.h(context, AppTheme.space16)),
         _buildActivityTile(
           context,
@@ -382,34 +406,45 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
     );
   }
 
-  Widget _buildActivityTile(BuildContext context, {required String title, required String date, required IconData icon, required Color iconColor, required Color bgColor}) {
-    return Container(
-      padding: EdgeInsets.all(Responsive.w(context, 16)),
-      decoration: BoxDecoration(
-        color: Colors.white,
+  Widget _buildActivityTile(BuildContext context, {required String title, required String date, required IconData icon, required Color iconColor, required Color bgColor, VoidCallback? onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(Responsive.w(context, 10)),
-            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: Responsive.w(context, 22)),
+        child: Container(
+          padding: EdgeInsets.all(Responsive.w(context, 16)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
+            border: Border.all(color: Colors.grey.shade100),
           ),
-          SizedBox(width: Responsive.w(context, 16)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                SizedBox(height: Responsive.h(context, 4)),
-                Text(date, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-              ],
-            ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(Responsive.w(context, 10)),
+                decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+                child: Icon(icon, color: iconColor, size: Responsive.w(context, 22)),
+              ),
+              SizedBox(width: Responsive.w(context, 16)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    SizedBox(height: Responsive.h(context, 4)),
+                    Text(date, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  void _openComplaintDetails(BuildContext context, Complaint complaint) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ComplaintDetailsPage(complaint: complaint)));
   }
 }

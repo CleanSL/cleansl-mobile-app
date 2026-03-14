@@ -10,7 +10,7 @@ import GoogleMaps
   ) -> Bool {
     // Initialise Google Maps before Flutter UI loads
     if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String {
-      GMSServices.provideAPIKey("AIzaSyCFdlfJYivnsx4ysSPwgkk6yFVsuIoVrII")
+      GMSServices.provideAPIKey("AIzaSyC-C7AuoRVUfrh1VIJa-U1gYYpT5-rbidw")
     }
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

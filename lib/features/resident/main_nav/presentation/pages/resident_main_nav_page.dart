@@ -3,6 +3,7 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../home/presentation/pages/resident_home_page.dart';
 import '../../../complaints/presentation/pages/complaints_main_page.dart';
+import '../../../schedule/presentation/pages/schedule_main_page.dart';
 
 class ResidentMainNavPage extends StatefulWidget {
   const ResidentMainNavPage({super.key});
@@ -16,7 +17,7 @@ class _ResidentMainNavPageState extends State<ResidentMainNavPage> {
 
   final List<Widget> _screens = [
     const ResidentHomePage(),
-    const Center(child: Text("Schedule & Calendar Placeholder")),
+    const ScheduleMainPage(),
     const ComplaintsMainPage(),
     const Center(child: Text("Resident Profile Placeholder")),
   ];

@@ -3,6 +3,7 @@ import '../../../../../core/utils/responsive.dart';
 import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
 import '../../../../../shared/widgets/cleansl_button.dart';
 import '../../../../common/onboarding/presentation/widgets/auth_screen_template.dart';
+import '../../../../../core/services/auth_service.dart';
 
 class DriverLoginPage extends StatefulWidget {
   const DriverLoginPage({super.key});
@@ -13,6 +14,7 @@ class DriverLoginPage extends StatefulWidget {
 
 class _DriverLoginPageState extends State<DriverLoginPage> {
   final TextEditingController _mobileController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -24,6 +26,24 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
   void dispose() {
     _mobileController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSendOtp() async {
+    setState(() => _isLoading = true);
+    try {
+      await AuthService().sendDriverOTP(mobile: _mobileController.text.trim());
+      if (mounted) {
+        Navigator.pushNamed(context, '/driver-otp', arguments: _mobileController.text.trim());
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -40,15 +60,13 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
         SizedBox(height: Responsive.h(context, 32)),
 
         // 2. Send OTP Button
-        CleanSlButton(
-          text: "Send OTP",
-          variant: ButtonVariant.primary,
-          onPressed: canSendOtp
-              ? () {
-                  Navigator.pushNamed(context, '/driver-otp', arguments: _mobileController.text.trim());
-                }
-              : null,
-        ),
+        _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : CleanSlButton(
+                text: "Send OTP",
+                variant: ButtonVariant.primary,
+                onPressed: canSendOtp ? _handleSendOtp : null,
+              ),
 
         SizedBox(height: Responsive.h(context, 16)),
 

@@ -4,6 +4,7 @@ import '../../../../../../core/utils/responsive.dart';
 import '../../../home/presentation/pages/resident_home_page.dart';
 import '../../../complaints/presentation/pages/complaints_main_page.dart';
 import '../../../schedule/presentation/pages/schedule_main_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 
 class ResidentMainNavPage extends StatefulWidget {
   const ResidentMainNavPage({super.key});
@@ -19,7 +20,7 @@ class _ResidentMainNavPageState extends State<ResidentMainNavPage> {
     const ResidentHomePage(),
     const ScheduleMainPage(),
     const ComplaintsMainPage(),
-    const Center(child: Text("Resident Profile Placeholder")),
+    const ProfilePage(),
   ];
 
   // 1. Define your icons and labels in simple lists

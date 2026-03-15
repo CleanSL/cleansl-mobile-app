@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; //  Import dotenv
 
 import 'package:firebase_core/firebase_core.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/firebase_options.dart';
 
 // Import custom theme file
 import 'core/theme/app_theme.dart';
@@ -39,9 +40,11 @@ Future<void> main() async {
     // 2. Load the .env file
     await dotenv.load(fileName: ".env");
 
-    // 3. Initialize Firebase — only on mobile (web reads no native config file)
+    // 3. Initialize Firebase 
     if (!kIsWeb) {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform, // <-- ADD THIS LINE
+      );
     }
 
     // 4. Initialize Supabase using the hidden variables

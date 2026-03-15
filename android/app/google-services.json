@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "350564425897",
-    "project_id": "cleansl-9f7ca",
-    "storage_bucket": "cleansl-9f7ca.firebasestorage.app"
+    "project_number": "921761295244",
+    "project_id": "cleansl-8f833",
+    "storage_bucket": "cleansl-8f833.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:350564425897:android:09dc5c822879a42a6a89b8",
+        "mobilesdk_app_id": "1:921761295244:android:02c5a80d216f3f653b44a9",
         "android_client_info": {
           "package_name": "com.example.cleansl_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyChtYaJrNe_iWr4GiN5PZSbWA6av9sz-qk"
+          "current_key": "AIzaSyDVEGHui1YGCAjNQJHvFXrRC5FKc52LTfo"
         }
       ],
       "services": {

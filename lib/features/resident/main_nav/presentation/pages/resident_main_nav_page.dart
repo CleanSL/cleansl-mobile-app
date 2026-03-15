@@ -1,6 +1,8 @@
+import 'dart:async'; // Need this for StreamSubscription
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../../../../../../core/services/notification_service.dart';
 import '../../../home/presentation/pages/resident_home_page.dart';
 import '../../../complaints/presentation/pages/complaints_main_page.dart';
 import '../../../schedule/presentation/pages/schedule_main_page.dart';
@@ -15,6 +17,9 @@ class ResidentMainNavPage extends StatefulWidget {
 
 class _ResidentMainNavPageState extends State<ResidentMainNavPage> {
   int _currentIndex = 0;
+  
+  // Create a variable to hold our subscription so we can close it if the page is ever destroyed
+  StreamSubscription<AppNotification>? _notificationSubscription;
 
   final List<Widget> _screens = [
     const ResidentHomePage(),
@@ -24,9 +29,69 @@ class _ResidentMainNavPageState extends State<ResidentMainNavPage> {
   ];
 
   // 1. Define your icons and labels in simple lists
-  final List<IconData> _icons = [Icons.home_rounded, Icons.calendar_month_rounded, Icons.document_scanner_rounded, Icons.person_rounded];
+  final List<IconData> _icons = [
+    Icons.home_rounded, 
+    Icons.calendar_month_rounded, 
+    Icons.document_scanner_rounded, 
+    Icons.person_rounded
+  ];
 
   final List<String> _labels = ["Home", "Schedule", "Complaints", "Profile"];
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // --- NOTIFICATION LISTENER ---
+    // This listens for push notifications while the app is actively open on the screen
+    _notificationSubscription = NotificationService.stream.listen((AppNotification notification) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.title, 
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  notification.body,
+                  style: const TextStyle(color: Colors.white, fontSize: 14)
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.secondaryColor1, // Dark Green Background
+            behavior: SnackBarBehavior.floating, // Makes it float above the bottom nav bar
+            margin: EdgeInsets.only(
+              bottom: Responsive.h(context, 100), // Push it above your custom nav bar
+              left: Responsive.w(context, 20),
+              right: Responsive.w(context, 20),
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'View',
+              textColor: AppTheme.hoverColor,
+              onPressed: () {
+                // Optional: If they click "View", jump to the Notifications tab/page
+                // Navigator.pushNamed(context, '/notifications');
+              },
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clean up the subscription when the widget dies to prevent memory leaks
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

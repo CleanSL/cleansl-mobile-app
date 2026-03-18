@@ -1,13 +1,20 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
+import '../../data/live_pickup_tracking_model.dart';
+import '../../data/resident_live_tracking_service.dart';
 import '../../../complaints/data/complaint_model.dart';
 import '../../../complaints/presentation/pages/complaint_details_page.dart';
 import '../../../complaints/presentation/pages/file_complaint_page.dart';
 import '../../../guide/presentation/pages/guide_main_page.dart';
 import 'notifications_page.dart';
 import 'recent_activity_page.dart';
+import '../../../schedule/presentation/pages/live_tracking_page.dart';
 
 class ResidentHomePage extends StatefulWidget {
   const ResidentHomePage({super.key});
@@ -19,6 +26,37 @@ class ResidentHomePage extends StatefulWidget {
 class _ResidentHomePageState extends State<ResidentHomePage> {
   // Placeholder for backend data
   final String userName = "Vinuu";
+  final bool _showDemoDummyMapOnly = true;
+  static const String _demoTruckArea = 'Galle Road, Dehiwala';
+  static const String _demoResidentArea = '42nd Lane, Wellawatte';
+  static const LatLng _demoTruckLocation = LatLng(6.852111, 79.865833);
+  static const LatLng _demoUserLocation = LatLng(6.867472, 79.861528);
+  static const List<LatLng> _demoRoutePoints = <LatLng>[
+    LatLng(6.852111, 79.865833),
+    LatLng(6.855420, 79.864510),
+    LatLng(6.859810, 79.863120),
+    LatLng(6.863500, 79.862200),
+    LatLng(6.867472, 79.861528),
+  ];
+  final DateFormat _timeFormatter = DateFormat('h:mm a');
+  final ResidentLiveTrackingService _liveTrackingService = ResidentLiveTrackingService();
+
+  BitmapDescriptor? _demoTruckMarkerIcon;
+  BitmapDescriptor? _demoHomeMarkerIcon;
+
+  GoogleMapController? _mapController;
+  StreamSubscription<List<Map<String, dynamic>>>? _pickupRowsSubscription;
+  Timer? _driverLocationPollingTimer;
+
+  LivePickupTracking? _livePickup;
+  bool _isLiveDataLoading = true;
+  bool _isRealtimeConnected = false;
+  String? _liveDataError;
+
+  Set<Polyline> _mapPolylines = const <Polyline>{};
+  Set<Marker> _mapMarkers = const <Marker>{};
+  String? _lastFocusedPickupId;
+  String? _activeDriverId;
 
   // Dynamic greeting based on current time
   String _getGreeting() {
@@ -26,6 +64,384 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
     if (hour < 12) return "Good morning";
     if (hour < 17) return "Good afternoon";
     return "Good evening";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLiveTracking();
+    _prepareDemoMarkerIcons();
+  }
+
+  @override
+  void dispose() {
+    _pickupRowsSubscription?.cancel();
+    _driverLocationPollingTimer?.cancel();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeLiveTracking() async {
+    final List<Map<String, dynamic>> initialRows = await _liveTrackingService.fetchPickupRowsForCurrentResident();
+
+    if (!mounted) {
+      return;
+    }
+
+    _applyPickupRows(initialRows, fromRealtime: false);
+
+    try {
+      _pickupRowsSubscription?.cancel();
+      _pickupRowsSubscription = _liveTrackingService.watchPickupRowsForCurrentResident().listen(
+        (rows) {
+          if (!mounted) {
+            return;
+          }
+          _applyPickupRows(rows, fromRealtime: true);
+        },
+        onError: (_) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _isRealtimeConnected = false;
+            _liveDataError = 'Live updates unavailable';
+            _isLiveDataLoading = false;
+          });
+        },
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRealtimeConnected = false;
+        _liveDataError = 'Live updates unavailable';
+        _isLiveDataLoading = false;
+      });
+    }
+  }
+
+  void _applyPickupRows(List<Map<String, dynamic>> rows, {required bool fromRealtime}) {
+    final LivePickupTracking? selectedPickup = _liveTrackingService.selectCurrentPickup(rows);
+
+    if (selectedPickup == null || selectedPickup.status != LivePickupStatus.ongoing || selectedPickup.driverId == null || selectedPickup.driverId!.isEmpty) {
+      _driverLocationPollingTimer?.cancel();
+      _driverLocationPollingTimer = null;
+      _activeDriverId = null;
+    } else {
+      if (_activeDriverId != selectedPickup.driverId) {
+        _startDriverLocationPolling(selectedPickup.driverId!);
+      }
+    }
+
+    final Set<Polyline> polylines = _buildPolylinesForPickup(selectedPickup);
+    final Set<Marker> markers = _buildMarkersForPickup(selectedPickup);
+
+    setState(() {
+      _livePickup = selectedPickup;
+      _isLiveDataLoading = false;
+      _isRealtimeConnected = fromRealtime || _isRealtimeConnected;
+      _liveDataError = null;
+      _mapPolylines = polylines;
+      _mapMarkers = markers;
+    });
+
+    _fitMapToCurrentRoute(force: fromRealtime);
+  }
+
+  void _startDriverLocationPolling(String driverId) {
+    _activeDriverId = driverId;
+    _driverLocationPollingTimer?.cancel();
+    _driverLocationPollingTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      _refreshDriverLocation(driverId);
+    });
+
+    _refreshDriverLocation(driverId);
+  }
+
+  Future<void> _refreshDriverLocation(String driverId) async {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null || pickup.status != LivePickupStatus.ongoing || pickup.driverId != driverId) {
+      return;
+    }
+
+    final Map<String, dynamic>? row = await _liveTrackingService.fetchLatestDriverLocation(driverId);
+    if (!mounted || row == null) {
+      return;
+    }
+
+    final LivePickupTracking mergedPickup = _liveTrackingService.mergeDriverLocation(pickup, row);
+
+    setState(() {
+      _livePickup = mergedPickup;
+      _mapMarkers = _buildMarkersForPickup(mergedPickup);
+    });
+  }
+
+  Set<Polyline> _buildPolylinesForPickup(LivePickupTracking? pickup) {
+    if (pickup == null || !pickup.hasRoute) {
+      return const <Polyline>{};
+    }
+
+    return <Polyline>{Polyline(polylineId: const PolylineId('resident-live-route'), points: pickup.routePoints, color: AppTheme.accentColor, width: 5, startCap: Cap.roundCap, endCap: Cap.roundCap)};
+  }
+
+  Set<Marker> _buildMarkersForPickup(LivePickupTracking? pickup) {
+    if (pickup == null || pickup.status != LivePickupStatus.ongoing || pickup.truckLocation == null) {
+      return const <Marker>{};
+    }
+
+    return <Marker>{
+      Marker(
+        markerId: const MarkerId('resident-live-truck'),
+        position: pickup.truckLocation!,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        infoWindow: InfoWindow(title: pickup.areaName, snippet: 'Collection truck'),
+      ),
+    };
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    if (_showDemoDummyMapOnly) {
+      _centerHomeMap();
+      return;
+    }
+    _fitMapToCurrentRoute(force: true);
+  }
+
+  Future<void> _fitMapToCurrentRoute({bool force = false}) async {
+    final GoogleMapController? controller = _mapController;
+    final LivePickupTracking? pickup = _livePickup;
+
+    if (controller == null || pickup == null || pickup.routePoints.isEmpty) {
+      return;
+    }
+
+    if (!force && pickup.pickupId == _lastFocusedPickupId) {
+      return;
+    }
+
+    final List<LatLng> points = List<LatLng>.from(pickup.routePoints);
+    if (pickup.status == LivePickupStatus.ongoing && pickup.truckLocation != null) {
+      points.add(pickup.truckLocation!);
+    }
+
+    try {
+      if (points.length == 1) {
+        await controller.animateCamera(CameraUpdate.newLatLngZoom(points.first, 14.5));
+        _lastFocusedPickupId = pickup.pickupId;
+        return;
+      }
+
+      double minLat = points.first.latitude;
+      double maxLat = points.first.latitude;
+      double minLng = points.first.longitude;
+      double maxLng = points.first.longitude;
+
+      for (final LatLng point in points.skip(1)) {
+        if (point.latitude < minLat) minLat = point.latitude;
+        if (point.latitude > maxLat) maxLat = point.latitude;
+        if (point.longitude < minLng) minLng = point.longitude;
+        if (point.longitude > maxLng) maxLng = point.longitude;
+      }
+
+      if ((maxLat - minLat).abs() < 0.0001 && (maxLng - minLng).abs() < 0.0001) {
+        await controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(minLat, minLng), 14.5));
+        _lastFocusedPickupId = pickup.pickupId;
+        return;
+      }
+
+      await controller.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), 48));
+
+      _lastFocusedPickupId = pickup.pickupId;
+    } catch (_) {
+      // Ignore transient camera animation errors while the map is settling.
+    }
+  }
+
+  String _liveMapAreaText() {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null) {
+      return 'No active route';
+    }
+
+    return pickup.areaName;
+  }
+
+  String _liveMapStatusText() {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null) {
+      if (_isLiveDataLoading) {
+        return 'Connecting to live updates...';
+      }
+      return 'No pickups today';
+    }
+
+    if (pickup.status == LivePickupStatus.ongoing) {
+      final int? eta = pickup.etaMinutes;
+      if (eta != null) {
+        return 'Arriving in ${eta}m';
+      }
+      return 'Pickup is in progress';
+    }
+
+    if (pickup.scheduledTime != null) {
+      return 'Upcoming pickup at ${_timeFormatter.format(pickup.scheduledTime!)}';
+    }
+
+    return 'Upcoming pickup today';
+  }
+
+  String _syncBadgeLabel() {
+    if (_isLiveDataLoading) {
+      return 'SYNCING';
+    }
+
+    if (_liveDataError != null) {
+      return 'OFFLINE';
+    }
+
+    if (_livePickup != null) {
+      return 'LIVE';
+    }
+
+    if (_isRealtimeConnected) {
+      return 'READY';
+    }
+
+    return 'IDLE';
+  }
+
+  Set<Polyline> _buildDemoPolylines() {
+    return <Polyline>{const Polyline(polylineId: PolylineId('resident-demo-route'), points: _demoRoutePoints, color: AppTheme.accentColor, width: 6, startCap: Cap.roundCap, endCap: Cap.roundCap)};
+  }
+
+  Set<Marker> _buildDemoMarkers() {
+    return <Marker>{
+      Marker(
+        markerId: const MarkerId('resident-demo-truck'),
+        position: _demoTruckLocation,
+        icon: _demoTruckMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        infoWindow: const InfoWindow(title: 'Collection Truck', snippet: _demoTruckArea),
+      ),
+      Marker(
+        markerId: const MarkerId('resident-demo-user'),
+        position: _demoUserLocation,
+        icon: _demoHomeMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        infoWindow: const InfoWindow(title: 'Your Location', snippet: _demoResidentArea),
+      ),
+    };
+  }
+
+  Future<void> _prepareDemoMarkerIcons() async {
+    if (!_showDemoDummyMapOnly) {
+      return;
+    }
+
+    try {
+      final BitmapDescriptor truckIcon = await _buildDemoMarkerIcon(icon: Icons.local_shipping_rounded, backgroundColor: AppTheme.accentColor, fallbackHue: BitmapDescriptor.hueGreen);
+      final BitmapDescriptor homeIcon = await _buildDemoMarkerIcon(icon: Icons.home_rounded, backgroundColor: AppTheme.secondaryColor1, fallbackHue: BitmapDescriptor.hueAzure);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _demoTruckMarkerIcon = truckIcon;
+        _demoHomeMarkerIcon = homeIcon;
+      });
+
+      // Refresh camera once custom icons are ready so map updates marker render.
+      _centerHomeMap();
+    } catch (_) {
+      // Falls back to default marker hues if custom icon generation fails.
+    }
+  }
+
+  Future<BitmapDescriptor> _buildDemoMarkerIcon({required IconData icon, required Color backgroundColor, required double fallbackHue}) async {
+    const double markerSize = 48;
+    const double iconSize = 22;
+    const double innerInset = 3;
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+    final Offset center = const Offset(markerSize / 2, markerSize / 2);
+
+    final Paint outerPaint = Paint()..color = Colors.white;
+    final Paint innerPaint = Paint()..color = backgroundColor;
+
+    canvas.drawCircle(center, markerSize / 2, outerPaint);
+    canvas.drawCircle(center, (markerSize / 2) - innerInset, innerPaint);
+
+    final TextPainter textPainter = TextPainter(textDirection: ui.TextDirection.ltr)
+      ..text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(fontSize: iconSize, fontFamily: icon.fontFamily, package: icon.fontPackage, color: Colors.white),
+      );
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(center.dx - (textPainter.width / 2), center.dy - (textPainter.height / 2)));
+
+    final ui.Image image = await recorder.endRecording().toImage(markerSize.toInt(), markerSize.toInt());
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    if (data == null) {
+      return BitmapDescriptor.defaultMarkerWithHue(fallbackHue);
+    }
+
+    // ignore: deprecated_member_use
+    return BitmapDescriptor.fromBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes), size: const Size(markerSize, markerSize));
+  }
+
+  String _displayMapAreaText() {
+    if (_showDemoDummyMapOnly) {
+      return 'Truck: $_demoTruckArea';
+    }
+    return _liveMapAreaText();
+  }
+
+  String _displayMapStatusText() {
+    if (_showDemoDummyMapOnly) {
+      return 'Arriving in 45m';
+    }
+    return _liveMapStatusText();
+  }
+
+  String _displayUserLocationText() {
+    if (_showDemoDummyMapOnly) {
+      return 'You: $_demoResidentArea';
+    }
+
+    return '';
+  }
+
+  Future<void> _centerHomeMap() async {
+    if (_showDemoDummyMapOnly) {
+      final GoogleMapController? controller = _mapController;
+      if (controller != null) {
+        try {
+          double minLat = _demoRoutePoints.first.latitude;
+          double maxLat = _demoRoutePoints.first.latitude;
+          double minLng = _demoRoutePoints.first.longitude;
+          double maxLng = _demoRoutePoints.first.longitude;
+
+          for (final LatLng point in _demoRoutePoints.skip(1)) {
+            if (point.latitude < minLat) minLat = point.latitude;
+            if (point.latitude > maxLat) maxLat = point.latitude;
+            if (point.longitude < minLng) minLng = point.longitude;
+            if (point.longitude > maxLng) maxLng = point.longitude;
+          }
+
+          await controller.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), 48));
+        } catch (_) {}
+      }
+      return;
+    }
+
+    _fitMapToCurrentRoute(force: true);
   }
 
   @override
@@ -142,15 +558,52 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
         child: Stack(
           children: [
             // REAL GOOGLE MAP
-            const GoogleMap(
-              initialCameraPosition: CameraPosition(
+            GoogleMap(
+              initialCameraPosition: const CameraPosition(
                 target: LatLng(6.8398, 79.8646), // Set to Mount Lavinia context
                 zoom: 14.5,
               ),
+              onMapCreated: _onMapCreated,
+              polylines: _showDemoDummyMapOnly ? _buildDemoPolylines() : _mapPolylines,
+              markers: _showDemoDummyMapOnly ? _buildDemoMarkers() : _mapMarkers,
               zoomControlsEnabled: false,
               myLocationButtonEnabled: false,
+              mapToolbarEnabled: false,
+              compassEnabled: false,
               mapType: MapType.normal,
+
+              onTap: (_) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LiveTrackingPage(
+                      wasteType: "Ongoing Pickup",
+                      zone: "Truck: $_demoTruckArea\nYou: $_demoResidentArea",
+                      team: "Team C-04",
+                      etaTime: "45m",
+                      etaDistance: "1.5km",
+                      themeColor: AppTheme.accentColor,
+                      wasteIcon: Icons.local_shipping_rounded,
+                      checklistItems: const ["Bins washed and clean", "Plastics sorted together", "Cardboard flattened"],
+                    ),
+                  ),
+                );
+              },
             ),
+
+            if (!_showDemoDummyMapOnly)
+              Positioned(
+                top: Responsive.h(context, 14),
+                left: Responsive.w(context, 14),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 10), vertical: Responsive.h(context, 4)),
+                  decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                    _syncBadgeLabel(),
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
+                ),
+              ),
 
             // ETA OVERLAY CARD
             Positioned(
@@ -172,18 +625,19 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text("Mount Lavinia", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(_displayMapAreaText(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                           Text(
-                            "Arriving in 10m",
+                            _displayMapStatusText(),
                             style: TextStyle(color: AppTheme.secondaryColor1.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600),
                           ),
+                          if (_displayUserLocationText().isNotEmpty) ...[
+                            SizedBox(height: Responsive.h(context, 2)),
+                            Text(
+                              _displayUserLocationText(),
+                              style: TextStyle(color: AppTheme.secondaryColor1.withValues(alpha: 0.68), fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ],
-                      ),
-                      SizedBox(width: Responsive.w(context, 16)),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(color: AppTheme.accentColor, shape: BoxShape.circle),
-                        child: const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 20),
                       ),
                     ],
                   ),
@@ -195,14 +649,19 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
             Positioned(
               bottom: Responsive.h(context, 20),
               right: Responsive.w(context, 16),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)],
+              child: GestureDetector(
+                onTap: () {
+                  _centerHomeMap();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)],
+                  ),
+                  child: const Icon(Icons.my_location_rounded, color: AppTheme.textColor, size: 20),
                 ),
-                child: const Icon(Icons.my_location_rounded, color: AppTheme.textColor, size: 20),
               ),
             ),
           ],

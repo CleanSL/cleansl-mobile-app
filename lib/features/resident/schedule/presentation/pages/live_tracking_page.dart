@@ -1,10 +1,16 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../../../home/data/live_pickup_tracking_model.dart';
+import '../../../home/data/resident_live_tracking_service.dart';
 
 class LiveTrackingPage extends StatefulWidget {
-  // --- TEMPLATE PARAMETERS ---
+  // --- TEMPLATE PARAMETERS (Passed from Card) ---
   final String wasteType;
   final String zone;
   final String team;
@@ -31,54 +37,273 @@ class LiveTrackingPage extends StatefulWidget {
 }
 
 class _LiveTrackingPageState extends State<LiveTrackingPage> {
-  static const CameraPosition _initialCameraPosition = CameraPosition(
-    target: LatLng(6.9061, 79.8687), // Colombo 07 coordinates
-    zoom: 14.0,
-  );
+  // 1. TOGGLE: Keep dummy map visible while real-time runs in background
+  final bool _showDemoDummyMapOnly = true;
 
+  // 2. DUMMY DATA (Matching home page)
+  static const LatLng _demoTruckLocation = LatLng(6.852111, 79.865833);
+  static const LatLng _demoUserLocation = LatLng(6.867472, 79.861528);
+  static const List<LatLng> _demoRoutePoints = <LatLng>[
+    LatLng(6.852111, 79.865833),
+    LatLng(6.855420, 79.864510),
+    LatLng(6.859810, 79.863120),
+    LatLng(6.863500, 79.862200),
+    LatLng(6.867472, 79.861528),
+  ];
+
+  // 3. REAL-TIME STATE
+  final ResidentLiveTrackingService _liveTrackingService = ResidentLiveTrackingService();
   GoogleMapController? _mapController;
+  StreamSubscription<List<Map<String, dynamic>>>? _pickupRowsSubscription;
+  Timer? _driverLocationPollingTimer;
+
+  LivePickupTracking? _livePickup;
   bool _isMapReady = false;
   bool _isRefreshing = false;
+  bool _isLiveDataLoading = true;
+  bool _isRealtimeConnected = false;
+  String? _activeDriverId;
 
-  // Dynamic Checklist State Map
+  Set<Polyline> _mapPolylines = const <Polyline>{};
+  Set<Marker> _mapMarkers = const <Marker>{};
+
+  // Custom Icons State
+  BitmapDescriptor? _truckMarkerIcon;
+  BitmapDescriptor? _residentMarkerIcon;
+
   final Map<String, bool> _checklistState = {};
 
   @override
   void initState() {
     super.initState();
-    // Initialize the dynamic checklist (set first two as checked for realism)
     for (int i = 0; i < widget.checklistItems.length; i++) {
-      _checklistState[widget.checklistItems[i]] = i < 2; // 0 and 1 are true, rest false
+      _checklistState[widget.checklistItems[i]] = i < 2;
+    }
+
+    _prepareMarkerIcons();
+    _initializeLiveTracking();
+  }
+
+  @override
+  void dispose() {
+    _pickupRowsSubscription?.cancel();
+    _driverLocationPollingTimer?.cancel();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  // --- REAL-TIME SUPABASE LOGIC ---
+  Future<void> _initializeLiveTracking() async {
+    final List<Map<String, dynamic>> initialRows = await _liveTrackingService.fetchPickupRowsForCurrentResident();
+    if (!mounted) return;
+
+    _applyPickupRows(initialRows, fromRealtime: false);
+
+    try {
+      _pickupRowsSubscription?.cancel();
+      _pickupRowsSubscription = _liveTrackingService.watchPickupRowsForCurrentResident().listen(
+        (rows) {
+          if (mounted) _applyPickupRows(rows, fromRealtime: true);
+        },
+        onError: (_) {
+          if (mounted) {
+            setState(() {
+              _isRealtimeConnected = false;
+              _isLiveDataLoading = false;
+            });
+          }
+        },
+      );
+    } catch (_) {
+      if (mounted) setState(() => _isLiveDataLoading = false);
     }
   }
 
+  void _applyPickupRows(List<Map<String, dynamic>> rows, {required bool fromRealtime}) {
+    final LivePickupTracking? selectedPickup = _liveTrackingService.selectCurrentPickup(rows);
+
+    if (selectedPickup == null || selectedPickup.status != LivePickupStatus.ongoing || selectedPickup.driverId == null) {
+      _driverLocationPollingTimer?.cancel();
+      _driverLocationPollingTimer = null;
+      _activeDriverId = null;
+    } else if (_activeDriverId != selectedPickup.driverId) {
+      _startDriverLocationPolling(selectedPickup.driverId!);
+    }
+
+    final Set<Polyline> polylines = _buildPolylinesForPickup(selectedPickup);
+    final Set<Marker> markers = _buildMarkersForPickup(selectedPickup);
+
+    setState(() {
+      _livePickup = selectedPickup;
+      _isLiveDataLoading = false;
+      _isRealtimeConnected = fromRealtime || _isRealtimeConnected;
+      _mapPolylines = polylines;
+      _mapMarkers = markers;
+    });
+
+    if (!_showDemoDummyMapOnly) _fitMapToCurrentRoute();
+  }
+
+  void _startDriverLocationPolling(String driverId) {
+    _activeDriverId = driverId;
+    _driverLocationPollingTimer?.cancel();
+    _driverLocationPollingTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      _refreshDriverLocation(driverId);
+    });
+    _refreshDriverLocation(driverId);
+  }
+
+  Future<void> _refreshDriverLocation(String driverId) async {
+    if (_livePickup == null || _livePickup!.driverId != driverId) return;
+
+    final Map<String, dynamic>? row = await _liveTrackingService.fetchLatestDriverLocation(driverId);
+    if (!mounted || row == null) return;
+
+    final LivePickupTracking mergedPickup = _liveTrackingService.mergeDriverLocation(_livePickup!, row);
+
+    setState(() {
+      _livePickup = mergedPickup;
+      _mapMarkers = _buildMarkersForPickup(mergedPickup);
+    });
+  }
+
+  // --- MAP RENDERERS ---
+  Set<Polyline> _buildPolylinesForPickup(LivePickupTracking? pickup) {
+    if (pickup == null || !pickup.hasRoute) return const <Polyline>{};
+    return <Polyline>{Polyline(polylineId: const PolylineId('live-route'), points: pickup.routePoints, color: widget.themeColor, width: 6, startCap: Cap.roundCap, endCap: Cap.roundCap)};
+  }
+
+  Set<Marker> _buildMarkersForPickup(LivePickupTracking? pickup) {
+    if (pickup == null || pickup.truckLocation == null) return const <Marker>{};
+    return <Marker>{
+      Marker(markerId: const MarkerId('live-truck'), position: pickup.truckLocation!, icon: _truckMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)),
+      Marker(
+        markerId: const MarkerId('live-resident'),
+        position: _demoUserLocation, // Assuming resident stays fixed
+        icon: _residentMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      ),
+    };
+  }
+
+  Set<Polyline> _buildDemoPolylines() {
+    return <Polyline>{Polyline(polylineId: const PolylineId('demo-route'), points: _demoRoutePoints, color: widget.themeColor, width: 6, startCap: Cap.roundCap, endCap: Cap.roundCap)};
+  }
+
+  Set<Marker> _buildDemoMarkers() {
+    return <Marker>{
+      Marker(markerId: const MarkerId('demo-truck'), position: _demoTruckLocation, icon: _truckMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)),
+      Marker(markerId: const MarkerId('demo-resident'), position: _demoUserLocation, icon: _residentMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)),
+    };
+  }
+
+  // --- CUSTOM MARKER BUILDER LOGIC ---
+  Future<void> _prepareMarkerIcons() async {
+    try {
+      final BitmapDescriptor truck = await _buildMapMarkerIcon(icon: Icons.local_shipping_rounded, backgroundColor: widget.themeColor, fallbackHue: BitmapDescriptor.hueGreen);
+      final BitmapDescriptor resident = await _buildMapMarkerIcon(icon: Icons.home_rounded, backgroundColor: AppTheme.secondaryColor1, fallbackHue: BitmapDescriptor.hueAzure);
+
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = truck;
+        _residentMarkerIcon = resident;
+      });
+      _centerMap();
+    } catch (_) {}
+  }
+
+  Future<BitmapDescriptor> _buildMapMarkerIcon({required IconData icon, required Color backgroundColor, required double fallbackHue}) async {
+    const double markerSize = 48;
+    const double iconSize = 22;
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+    final Paint paint = Paint()..color = backgroundColor;
+
+    canvas.drawCircle(const Offset(markerSize / 2, markerSize / 2), markerSize / 2, paint);
+
+    final TextPainter textPainter = TextPainter(textDirection: ui.TextDirection.ltr)
+      ..text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(fontSize: iconSize, fontFamily: icon.fontFamily, package: icon.fontPackage, color: Colors.white),
+      );
+
+    textPainter.layout();
+    textPainter.paint(canvas, Offset((markerSize - textPainter.width) / 2, (markerSize - textPainter.height) / 2));
+
+    final ui.Image image = await recorder.endRecording().toImage(markerSize.toInt(), markerSize.toInt());
+    final ByteData? data = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    if (data == null) return BitmapDescriptor.defaultMarkerWithHue(fallbackHue);
+    return BitmapDescriptor.bytes(data.buffer.asUint8List());
+  }
+
+  // --- CAMERA CONTROLS ---
   Future<void> _handleRefresh() async {
     if (_isRefreshing || !_isMapReady) return;
     setState(() => _isRefreshing = true);
 
     try {
-      final controller = _mapController;
-      if (controller != null) {
-        await controller.animateCamera(CameraUpdate.newCameraPosition(_initialCameraPosition));
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Live map updated"), duration: Duration(milliseconds: 900)));
-        }
-      }
-    } catch (_) {
+      _centerMap();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Map refresh failed. Please try again.")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Live map updated"), duration: Duration(milliseconds: 900)));
       }
-    }
+    } catch (_) {}
 
     await Future.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-    setState(() => _isRefreshing = false);
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
-  @override
-  void dispose() {
-    _mapController = null;
-    super.dispose();
+  Future<void> _centerMap() async {
+    if (_showDemoDummyMapOnly) {
+      _fitBounds(_demoRoutePoints);
+    } else {
+      _fitMapToCurrentRoute();
+    }
+  }
+
+  void _fitMapToCurrentRoute() {
+    if (_livePickup == null || _livePickup!.routePoints.isEmpty) return;
+
+    final List<LatLng> points = List<LatLng>.from(_livePickup!.routePoints);
+    if (_livePickup!.truckLocation != null) points.add(_livePickup!.truckLocation!);
+
+    _fitBounds(points);
+  }
+
+  void _fitBounds(List<LatLng> points) async {
+    if (_mapController == null || points.isEmpty) return;
+
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final LatLng point in points) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    try {
+      await _mapController!.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), 60));
+    } catch (_) {}
+  }
+
+  // --- DYNAMIC TEXT DISPLAYS ---
+  String _displayEtaTime() {
+    if (_showDemoDummyMapOnly) return widget.etaTime;
+    return _livePickup?.etaMinutes != null ? '${_livePickup!.etaMinutes}m' : '--';
+  }
+
+  String _displayEtaDistance() {
+    if (_showDemoDummyMapOnly) return "Truck is ${widget.etaDistance} away";
+    return 'Truck is En route';
+  }
+
+  String _displayZoneText() {
+    if (_showDemoDummyMapOnly) return widget.zone;
+    return _livePickup?.areaName ?? 'Connecting...';
   }
 
   @override
@@ -112,69 +337,39 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
               height: Responsive.h(context, 380),
               width: double.infinity,
               child: Stack(
-                alignment: Alignment.center,
                 children: [
                   GoogleMap(
-                    initialCameraPosition: _initialCameraPosition,
+                    initialCameraPosition: const CameraPosition(target: _demoTruckLocation, zoom: 14.0),
                     onMapCreated: (controller) {
                       _mapController = controller;
                       if (!mounted) return;
                       setState(() => _isMapReady = true);
+                      _centerMap();
                     },
+                    polylines: _showDemoDummyMapOnly ? _buildDemoPolylines() : _mapPolylines,
+                    markers: _showDemoDummyMapOnly ? _buildDemoMarkers() : _mapMarkers,
                     zoomControlsEnabled: false,
                     myLocationButtonEnabled: false,
                     mapToolbarEnabled: false,
                     compassEnabled: false,
                   ),
 
-                  // Custom Center Marker Overlay (Truck)
-                  Positioned(
-                    top: Responsive.h(context, 120),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)],
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.home_rounded, size: 16),
-                              SizedBox(width: 4),
-                              Text("Your Home", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
+                  // Live Status Badge
+                  if (!_showDemoDummyMapOnly && !_isLiveDataLoading)
+                    Positioned(
+                      top: Responsive.h(context, 14),
+                      left: Responsive.w(context, 14),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 10), vertical: Responsive.h(context, 4)),
+                        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(20)),
+                        child: Text(
+                          _isRealtimeConnected ? 'LIVE' : 'OFFLINE',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
-                        const SizedBox(height: 16),
-                        // DYNAMIC Truck Marker Color
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: widget.themeColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 6)],
-                          ),
-                          child: const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 28),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8)],
-                          ),
-                          child: Text("Arriving in ${widget.etaTime}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
 
-                  // Bottom Overlay Card
+                  // Bottom Overlay Card (Estimated Arrival)
                   Positioned(
                     bottom: Responsive.h(context, 18),
                     left: 0,
@@ -201,7 +396,10 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
                                   ).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.55), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.1),
                                 ),
                                 const SizedBox(height: 4),
-                                Text("Truck is ${widget.etaDistance} away", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                Text(_displayZoneText(), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 13)),
+                                const SizedBox(height: 2),
+                                // FIX: _displayEtaDistance is now correctly used here!
+                                Text(_displayEtaDistance(), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
                               ],
                             ),
                           ),
@@ -258,13 +456,12 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
                     ),
                     child: Column(
                       children: [
-                        // DYNAMIC Theme Injection
                         _buildDetailRow(widget.wasteIcon, "WASTE TYPE", widget.wasteType, widget.themeColor.withValues(alpha: 0.15), widget.themeColor),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           child: Divider(height: 1, color: Color(0xFFF3F4F6)),
                         ),
-                        _buildDetailRow(Icons.location_on_outlined, "CURRENT ZONE", widget.zone, AppTheme.secondaryColor1.withValues(alpha: 0.12), AppTheme.secondaryColor1),
+                        _buildDetailRow(Icons.timer_outlined, "ETA TIME", _displayEtaTime(), AppTheme.secondaryColor1.withValues(alpha: 0.12), AppTheme.secondaryColor1),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           child: Divider(height: 1, color: Color(0xFFF3F4F6)),
@@ -345,7 +542,7 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
         text,
         style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: AppTheme.textColor),
       ),
-      activeColor: widget.themeColor, // Dynamic Checkbox color!
+      activeColor: widget.themeColor,
       checkColor: Colors.white,
       controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.symmetric(horizontal: Responsive.w(context, 16)),

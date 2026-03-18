@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
-import '../../../../../../core/utils/classifier_service.dart';
-import '../widgets/evidence_picker.dart'; // New Import
+import '../../data/ml_service.dart'; // Import Nafhath'S ML Service
+import '../widgets/evidence_picker.dart';
 import 'complaint_success_page.dart';
 
 class FileComplaintPage extends StatefulWidget {
@@ -19,15 +19,19 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
   File? _evidenceImage;
   String? _selectedCategory;
   final TextEditingController _descriptionController = TextEditingController();
-  final ClassifierService _classifier = ClassifierService();
+  
+  // 1. Initialize Nafhath's Real ML Service
+  final MLService _mlService = MLService();
   bool _isMLProcessing = false;
 
-  final List<String> _issueCategories = ['Missed Pickup', 'Overflowing Bin', 'Illegal Dumping', 'Other'];
+  // Added 'Waste Sorting Issue' to match the ML model's purpose!
+  final List<String> _issueCategories = ['Waste Sorting Issue', 'Missed Pickup', 'Overflowing Bin', 'Illegal Dumping', 'Other'];
 
   @override
   void initState() {
     super.initState();
-    _classifier.initialize();
+    // 2. Load the .tflite brain into memory when the page opens
+    _mlService.loadModel(); 
   }
 
   @override
@@ -40,24 +44,61 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
 
     if (image != null) {
-      final File pickedFile = File(image.path);
       setState(() {
-        _evidenceImage = pickedFile;
-        _isMLProcessing = true;
+        _evidenceImage = File(image.path);
       });
+    }
+  }
 
-      final String? mlSuggestedCategory = await _classifier.classifyImage(pickedFile);
+  // --- 3. THE 85% RULE SUBMISSION LOGIC ---
+  Future<void> _submitComplaintWithML() async {
+    // Validation: Require an image for the ML model to work
+    if (_evidenceImage == null || _selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a category and add evidence.")),
+      );
+      return;
+    }
 
-      if (!mounted) return;
-      setState(() {
-        _isMLProcessing = false;
-        if (mlSuggestedCategory != null && _issueCategories.contains(mlSuggestedCategory)) {
-          _selectedCategory = mlSuggestedCategory;
-        }
-      });
-      if (mlSuggestedCategory != null && _issueCategories.contains(mlSuggestedCategory)) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("AI suggests: $mlSuggestedCategory")));
+    setState(() => _isMLProcessing = true);
+
+    try {
+      // Run the image through Nafhath's ML Model
+      final mlResult = await _mlService.predict(_evidenceImage!);
+      String detectedMaterial = mlResult['label']; // e.g., "plastic"
+      double confidence = mlResult['confidence'];  // e.g., 0.88 (88%)
+
+      debugPrint("🤖 ML Detected: $detectedMaterial with ${(confidence * 100).toStringAsFixed(1)}% confidence");
+
+      // Apply the 85% Rule!
+      if (confidence >= 0.85) {
+        // ✅ High Confidence: Update the user's complaint log directly
+        debugPrint("✅ ROUTING TO RESIDENT LOG: Confidence is high enough to auto-verify.");
+        
+        // TODO for Husni: Supabase insert into 'complaints' table
+        // supabase.from('complaints').insert({...});
+        
+      } else {
+        // ⚠️ Low Confidence (<85%): Send to CMC Admin Website for Human Verification
+        debugPrint("⚠️ ROUTING TO CMC ADMIN: Confidence too low. Needs human verification.");
+        
+        // TODO for Husni: Supabase insert into 'cmc_human_review' table
+        // supabase.from('cmc_human_review').insert({...});
       }
+
+      // Success! Stop processing and go to the Success Page
+      if (!mounted) return;
+      setState(() => _isMLProcessing = false);
+      
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder: (context) => ComplaintSuccessPage(referenceId: "CMC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}"))
+      );
+
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isMLProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
     }
   }
 
@@ -111,13 +152,16 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
             ),
             SizedBox(height: Responsive.h(context, 8)),
 
-            // Using extracted Widget
+            // Using extracted Widget (Now spins when processing ML!)
             EvidencePicker(image: _evidenceImage, onTap: _handleImageAction, isProcessing: _isMLProcessing),
 
             SizedBox(height: Responsive.h(context, 24)),
             _buildLocationBox(),
             SizedBox(height: Responsive.h(context, 40)),
+            
+            // 4. Update the Button to call the ML function!
             _buildSubmitButton(),
+            
             SizedBox(height: Responsive.h(context, 24)),
           ],
         ),
@@ -197,12 +241,13 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ComplaintSuccessPage(referenceId: "CMC-89201")));
-        },
-        icon: const Icon(Icons.send_rounded, size: 18),
+        // CALL THE NEW ML FUNCTION HERE
+        onPressed: _isMLProcessing ? null : _submitComplaintWithML,
+        icon: _isMLProcessing 
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Icon(Icons.send_rounded, size: 18),
         label: Text(
-          "Submit Report",
+          _isMLProcessing ? "Verifying via AI..." : "Submit Report",
           style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         style: ElevatedButton.styleFrom(

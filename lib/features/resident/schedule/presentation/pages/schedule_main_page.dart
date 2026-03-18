@@ -1,7 +1,12 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import '../../../home/data/live_pickup_tracking_model.dart';
+import '../../../home/data/resident_live_tracking_service.dart';
 import '../widgets/live_tracking_card.dart';
 import '../widgets/schedule_calendar.dart';
 import '../pages/pickup_details_page.dart';
@@ -17,6 +22,294 @@ class ScheduleMainPage extends StatefulWidget {
 class _ScheduleMainPageState extends State<ScheduleMainPage> {
   // 1. STATE: Track which upcoming pickups have active reminders
   final Set<int> _notifiedPickups = {};
+  final bool _showDemoDummyMapOnly = true;
+  static const LatLng _demoTruckLocation = LatLng(6.852111, 79.865833);
+  static const LatLng _demoUserLocation = LatLng(6.867472, 79.861528);
+  static const List<LatLng> _demoRoutePoints = <LatLng>[
+    LatLng(6.852111, 79.865833), // Truck Start
+    LatLng(6.855420, 79.864510), // Moving North
+    LatLng(6.859810, 79.863120),
+    LatLng(6.863500, 79.862200),
+    LatLng(6.867472, 79.861528), // Resident Home
+  ];
+  final ResidentLiveTrackingService _liveTrackingService = ResidentLiveTrackingService();
+  final DateFormat _timeFormatter = DateFormat('h:mm a');
+
+  StreamSubscription<List<Map<String, dynamic>>>? _pickupRowsSubscription;
+  Timer? _driverLocationPollingTimer;
+
+  LivePickupTracking? _livePickup;
+  bool _isLiveDataLoading = true;
+  bool _isRealtimeConnected = false;
+  String? _liveDataError;
+  String? _activeDriverId;
+
+  static const LatLng _fallbackMapCenter = LatLng(6.9061, 79.8687);
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLiveTracking();
+  }
+
+  @override
+  void dispose() {
+    _pickupRowsSubscription?.cancel();
+    _driverLocationPollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initializeLiveTracking() async {
+    final List<Map<String, dynamic>> initialRows = await _liveTrackingService.fetchPickupRowsForCurrentResident();
+    if (!mounted) {
+      return;
+    }
+
+    _applyPickupRows(initialRows, fromRealtime: false);
+
+    try {
+      _pickupRowsSubscription?.cancel();
+      _pickupRowsSubscription = _liveTrackingService.watchPickupRowsForCurrentResident().listen(
+        (rows) {
+          if (!mounted) {
+            return;
+          }
+          _applyPickupRows(rows, fromRealtime: true);
+        },
+        onError: (_) {
+          if (!mounted) {
+            return;
+          }
+
+          setState(() {
+            _isRealtimeConnected = false;
+            _liveDataError = 'Live updates unavailable';
+            _isLiveDataLoading = false;
+          });
+        },
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRealtimeConnected = false;
+        _liveDataError = 'Live updates unavailable';
+        _isLiveDataLoading = false;
+      });
+    }
+  }
+
+  void _applyPickupRows(List<Map<String, dynamic>> rows, {required bool fromRealtime}) {
+    final LivePickupTracking? selectedPickup = _liveTrackingService.selectCurrentPickup(rows);
+
+    if (selectedPickup == null || selectedPickup.status != LivePickupStatus.ongoing || selectedPickup.driverId == null || selectedPickup.driverId!.isEmpty) {
+      _driverLocationPollingTimer?.cancel();
+      _driverLocationPollingTimer = null;
+      _activeDriverId = null;
+    } else if (_activeDriverId != selectedPickup.driverId) {
+      _startDriverLocationPolling(selectedPickup.driverId!);
+    }
+
+    setState(() {
+      _livePickup = selectedPickup;
+      _isLiveDataLoading = false;
+      _isRealtimeConnected = fromRealtime || _isRealtimeConnected;
+      _liveDataError = null;
+    });
+  }
+
+  void _startDriverLocationPolling(String driverId) {
+    _activeDriverId = driverId;
+    _driverLocationPollingTimer?.cancel();
+    _driverLocationPollingTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      _refreshDriverLocation(driverId);
+    });
+
+    _refreshDriverLocation(driverId);
+  }
+
+  Future<void> _refreshDriverLocation(String driverId) async {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null || pickup.status != LivePickupStatus.ongoing || pickup.driverId != driverId) {
+      return;
+    }
+
+    final Map<String, dynamic>? row = await _liveTrackingService.fetchLatestDriverLocation(driverId);
+    if (!mounted || row == null) {
+      return;
+    }
+
+    final LivePickupTracking mergedPickup = _liveTrackingService.mergeDriverLocation(pickup, row);
+
+    setState(() {
+      _livePickup = mergedPickup;
+    });
+  }
+
+  String _liveBadgeLabel() {
+    if (_isLiveDataLoading) {
+      return 'SYNCING';
+    }
+
+    if (_liveDataError != null) {
+      return 'OFFLINE';
+    }
+
+    if (_livePickup != null) {
+      return 'LIVE';
+    }
+
+    if (_isRealtimeConnected) {
+      return 'READY';
+    }
+
+    return 'IDLE';
+  }
+
+  String _liveStatusText() {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null) {
+      return 'No pickups today';
+    }
+
+    if (pickup.status == LivePickupStatus.ongoing) {
+      if (pickup.etaMinutes != null) {
+        return 'Arriving in ${pickup.etaMinutes}m';
+      }
+      return 'Pickup in progress';
+    }
+
+    if (pickup.scheduledTime != null) {
+      return 'Upcoming pickup at ${_timeFormatter.format(pickup.scheduledTime!)}';
+    }
+
+    return 'Upcoming pickup today';
+  }
+
+  String _liveZoneText() {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null) {
+      return 'No active route';
+    }
+
+    return pickup.areaName;
+  }
+
+  LatLng _liveInitialCenter() {
+    final LivePickupTracking? pickup = _livePickup;
+    if (pickup == null) {
+      return _fallbackMapCenter;
+    }
+
+    if (pickup.truckLocation != null) {
+      return pickup.truckLocation!;
+    }
+
+    if (pickup.routePoints.isNotEmpty) {
+      return pickup.routePoints.first;
+    }
+
+    return _fallbackMapCenter;
+  }
+
+  String _liveEtaDistanceText() {
+    if (_livePickup == null) {
+      return 'No active pickup';
+    }
+
+    if (_livePickup!.status == LivePickupStatus.ongoing) {
+      return _livePickup!.etaMinutes != null ? '${_livePickup!.etaMinutes} min' : 'En route';
+    }
+
+    return 'Scheduled';
+  }
+
+  String _liveEtaTimeText() {
+    if (_livePickup == null) {
+      return 'No pickups today';
+    }
+
+    if (_livePickup!.status == LivePickupStatus.ongoing) {
+      return _livePickup!.etaMinutes != null ? '${_livePickup!.etaMinutes}m' : 'Live';
+    }
+
+    if (_livePickup!.scheduledTime != null) {
+      return _timeFormatter.format(_livePickup!.scheduledTime!);
+    }
+
+    return 'Today';
+  }
+
+  Color _inProgressBadgeColor() {
+    if (_showDemoDummyMapOnly) {
+      return AppTheme.accentColor;
+    }
+
+    return _livePickup != null ? AppTheme.accentColor : Colors.blueGrey;
+  }
+
+  String _inProgressBadgeLabel() {
+    if (_showDemoDummyMapOnly) {
+      return 'LIVE';
+    }
+
+    return _liveBadgeLabel();
+  }
+
+  Widget _buildInProgressTrackingCard() {
+    if (_showDemoDummyMapOnly) {
+      // Match the dummy card style/content from resident_home_page.dart
+      return LiveTrackingCard(
+        wasteType: "Ongoing Pickup",
+        zone: "Truck: Galle Road, Dehiwala\nYou: 42nd Lane, Wellawatte",
+        team: "Team C-04",
+        etaTime: "45m",
+        etaDistance: "1.5km",
+        themeColor: AppTheme.accentColor,
+        wasteIcon: Icons.local_shipping_rounded,
+        checklistItems: ["Bins washed and clean", "Plastics sorted together", "Cardboard flattened"],
+        statusText: "Truck: Galle Road, Dehiwala\nYou: 42nd Lane, Wellawatte",
+        routePoints: _demoRoutePoints,
+        truckPosition: _demoTruckLocation,
+        userPosition: _demoUserLocation,
+        initialMapCenter: _demoTruckLocation,
+        zoneLabel: "TRACKING",
+      );
+    }
+
+    final LivePickupTracking? pickup = _livePickup;
+    final bool hasPickup = pickup != null;
+    final bool isOngoing = pickup?.status == LivePickupStatus.ongoing;
+    final Color accent = hasPickup ? AppTheme.accentColor : Colors.blueGrey;
+
+    String teamText = hasPickup ? 'Assigned Team' : 'No team assigned';
+    if (pickup?.driverId != null && pickup!.driverId!.isNotEmpty) {
+      final String id = pickup.driverId!;
+      final int previewLength = id.length >= 6 ? 6 : id.length;
+      teamText = 'Driver ${id.substring(0, previewLength)}';
+    }
+
+    return LiveTrackingCard(
+      wasteType: hasPickup ? (isOngoing ? 'Ongoing Pickup' : 'Upcoming Pickup') : 'No Pickup Scheduled',
+      zone: _liveZoneText(),
+      team: teamText,
+      etaTime: _liveEtaTimeText(),
+      etaDistance: _liveEtaDistanceText(),
+      themeColor: accent,
+      wasteIcon: isOngoing ? Icons.local_shipping_rounded : Icons.schedule_rounded,
+      checklistItems: const ['Set out bins before the pickup window', 'Keep collection point accessible', 'Prepare bin before collection'],
+      statusText: _liveStatusText(),
+      routePoints: pickup?.routePoints,
+      truckPosition: isOngoing ? pickup?.truckLocation : null,
+      userPosition: null,
+      initialMapCenter: _liveInitialCenter(),
+      isNavigationEnabled: hasPickup,
+      showRefreshButton: hasPickup,
+      zoneLabel: hasPickup ? (isOngoing ? 'CURRENT ZONE' : 'UPCOMING AREA') : 'TODAY',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,14 +353,14 @@ class _ScheduleMainPageState extends State<ScheduleMainPage> {
                 Text("In Progress", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: _inProgressBadgeColor().withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
                   child: Row(
                     children: [
-                      const Icon(Icons.circle, color: AppTheme.accentColor, size: 8),
+                      Icon(Icons.circle, color: _inProgressBadgeColor(), size: 8),
                       const SizedBox(width: 4),
                       Text(
-                        "LIVE",
-                        style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1.1),
+                        _inProgressBadgeLabel(),
+                        style: TextStyle(color: _inProgressBadgeColor(), fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1.1),
                       ),
                     ],
                   ),
@@ -75,16 +368,7 @@ class _ScheduleMainPageState extends State<ScheduleMainPage> {
               ],
             ),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
-            const LiveTrackingCard(
-              wasteType: "Recyclables (Plastic/Paper)",
-              zone: "Colombo 07 - Cinnamon\nGardens",
-              team: "Team C-04",
-              etaTime: "12m",
-              etaDistance: "1.2km",
-              themeColor: AppTheme.accentColor,
-              wasteIcon: Icons.recycling_rounded,
-              checklistItems: ["Bins washed and clean", "Plastics sorted together", "Cardboard flattened"],
-            ),
+            _buildInProgressTrackingCard(),
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
 
             // 3. UPCOMING SECTION

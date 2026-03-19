@@ -19,7 +19,7 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
   File? _evidenceImage;
   String? _selectedCategory;
   final TextEditingController _descriptionController = TextEditingController();
-  
+
   // 1. Initialize Nafhath's Real ML Service
   final MLService _mlService = MLService();
   bool _isMLProcessing = false;
@@ -31,7 +31,7 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
   void initState() {
     super.initState();
     // 2. Load the .tflite brain into memory when the page opens
-    _mlService.loadModel(); 
+    _mlService.loadModel();
   }
 
   @override
@@ -51,54 +51,49 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
   }
 
   // --- 3. THE 85% RULE SUBMISSION LOGIC ---
+  // --- 3. THE SMART SUBMISSION LOGIC ---
   Future<void> _submitComplaintWithML() async {
-    // Validation: Require an image for the ML model to work
+    // Validation
     if (_evidenceImage == null || _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a category and add evidence.")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a category and add evidence.")));
       return;
     }
 
     setState(() => _isMLProcessing = true);
 
     try {
-      // Run the image through Nafhath's ML Model
-      final mlResult = await _mlService.predict(_evidenceImage!);
-      String detectedMaterial = mlResult['label']; // e.g., "plastic"
-      double confidence = mlResult['confidence'];  // e.g., 0.88 (88%)
+      // BRANCH 1: ONLY Run ML if it is a Waste Sorting Issue!
+      if (_selectedCategory == 'Waste Sorting Issue') {
+        final mlResult = await _mlService.predict(_evidenceImage!);
+        String detectedMaterial = mlResult['label']; // e.g., "plastic"
+        double confidence = mlResult['confidence']; // e.g., 0.88 (88%)
 
-      debugPrint("🤖 ML Detected: $detectedMaterial with ${(confidence * 100).toStringAsFixed(1)}% confidence");
+        debugPrint("ML Detected: $detectedMaterial with ${(confidence * 100).toStringAsFixed(1)}% confidence");
 
-      // Apply the 85% Rule!
-      if (confidence >= 0.85) {
-        // ✅ High Confidence: Update the user's complaint log directly
-        debugPrint("✅ ROUTING TO RESIDENT LOG: Confidence is high enough to auto-verify.");
-        
-        // TODO for Husni: Supabase insert into 'complaints' table
-        // supabase.from('complaints').insert({...});
-        
-      } else {
-        // ⚠️ Low Confidence (<85%): Send to CMC Admin Website for Human Verification
-        debugPrint("⚠️ ROUTING TO CMC ADMIN: Confidence too low. Needs human verification.");
-        
-        // TODO for Husni: Supabase insert into 'cmc_human_review' table
-        // supabase.from('cmc_human_review').insert({...});
+        // Apply the 85% Rule
+        if (confidence >= 0.85) {
+          debugPrint("ROUTING TO RESIDENT LOG: Auto-verified $detectedMaterial issue.");
+          // TODO for Husni: Insert directly into user's resolved log
+        } else {
+          debugPrint("ROUTING TO CMC ADMIN: Confidence too low. Needs human verification.");
+          // TODO for Husni: Insert into CMC manual review queue
+        }
+      }
+      // 🚛 BRANCH 2: Standard Complaints (Missed Pickups, Overflowing Bins)
+      else {
+        debugPrint("STANDARD REPORT: Bypassing AI for '$_selectedCategory'.");
+        // TODO for Husni: Insert standard complaint straight to the database
       }
 
       // Success! Stop processing and go to the Success Page
       if (!mounted) return;
       setState(() => _isMLProcessing = false);
-      
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(builder: (context) => ComplaintSuccessPage(referenceId: "CMC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}"))
-      );
 
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ComplaintSuccessPage(referenceId: "CMC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}")));
     } catch (e) {
       if (!mounted) return;
       setState(() => _isMLProcessing = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error processing image: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error processing request: $e")));
     }
   }
 
@@ -158,10 +153,10 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
             SizedBox(height: Responsive.h(context, 24)),
             _buildLocationBox(),
             SizedBox(height: Responsive.h(context, 40)),
-            
+
             // 4. Update the Button to call the ML function!
             _buildSubmitButton(),
-            
+
             SizedBox(height: Responsive.h(context, 24)),
           ],
         ),
@@ -243,9 +238,7 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
       child: ElevatedButton.icon(
         // CALL THE NEW ML FUNCTION HERE
         onPressed: _isMLProcessing ? null : _submitComplaintWithML,
-        icon: _isMLProcessing 
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : const Icon(Icons.send_rounded, size: 18),
+        icon: _isMLProcessing ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.send_rounded, size: 18),
         label: Text(
           _isMLProcessing ? "Verifying via AI..." : "Submit Report",
           style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),

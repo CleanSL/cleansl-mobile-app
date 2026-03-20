@@ -697,8 +697,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
         statusText = "You are all caught up for today!";
         progressValue = 0.0;
       } else {
-        // Map real-time data (fallback to "General Waste" if your model doesn't have a type property)
-        wasteType = "General Waste"; 
+        wasteType = "Organic Waste"; 
         zoneStr = _livePickup!.areaName;
         
         if (_livePickup!.scheduledTime != null) {

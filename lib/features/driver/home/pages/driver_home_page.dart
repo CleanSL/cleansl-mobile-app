@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
+import 'bambalapitiya_route_page.dart';
 
 // --- DATA MODEL ---
 class WasteWard {
@@ -154,23 +155,23 @@ class _DriverHomePageState extends State<DriverHomePage> {
     final bool isSelected = _selectedWard.id == ward.id;
 
     return GestureDetector(
-      // onTap: () {
-      //   if (_selectedWard.name == 'Bambalapitiya') {
-      //     Navigator.push(
-      //       context,
-      //       MaterialPageRoute(builder: (context) => const BambalapitiyaRoutePage()),
-      //     );
-      //   } else {
-      //     ScaffoldMessenger.of(context).showSnackBar(
-      //       SnackBar(
-      //         content: Text("${_selectedWard.name} routes are locked for this truck."),
-      //         backgroundColor: AppTheme.secondaryColor1,
-      //         behavior: SnackBarBehavior.floating,
-      //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
-      //       ),
-      //     );
-      //   }
-      // },
+      onTap: () {
+        if (_selectedWard.name == 'Bambalapitiya') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BambalapitiyaRoutePage()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("${_selectedWard.name} routes are locked for this truck."),
+              backgroundColor: AppTheme.secondaryColor1,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
+            ),
+          );
+        }
+      },
 
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

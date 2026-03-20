@@ -1,61 +1,90 @@
-CleanSL Mobile Application
-Project Overview
-CleanSL is a comprehensive, smart waste management mobile ecosystem developed as part of a Software Development Group Project (SDGP). Built entirely with Flutter, the application bridges the gap between municipal waste collection services and local residents, ensuring a cleaner, greener, and more transparent city infrastructure.
+# CleanSL Mobile Application
 
-The mobile application is architected to serve two distinct user bases with highly optimized interfaces:
+> A comprehensive, smart waste management mobile ecosystem bridging the gap between municipal waste collection services and local residents, ensuring a cleaner, greener, and more transparent city infrastructure.
 
-The Resident Interface: Focused on real-time transparency, scheduling, and environmental impact tracking.
+---
 
-The Driver Interface: Focused on low-friction, high-speed reporting and route management for frontline workers.
+## Table of Contents
+1. [Project Overview](#project-overview)
+2. [Core Modules](#core-modules)
+   - [Resident Interface](#resident-interface)
+   - [Driver Interface](#driver-interface)
+3. [Technical Stack](#technical-stack)
+4. [Project Structure](#project-structure)
+5. [Academic Context](#academic-context)
 
-Key Features
-Resident Interface
-Real-Time Truck Tracking: A live Google Maps integration that polls driver locations via a custom tracking service. It features custom UI markers, automatic camera bounding, and dynamic ETA calculations based on the truck's proximity.
+---
 
-Smart Home Dashboard: Includes a dynamic "Next Pickup" card that updates its progress bar and status text in real-time, switching seamlessly between scheduled states and active en-route tracking.
+## Project Overview
 
-Collection Certificates & Impact Tracking: Every completed pickup generates a digital certificate. Residents can track their personal environmental footprint, viewing dynamic metrics like CO2 emissions prevented, energy saved, and water conserved based on the specific waste category (Organic, Recyclables, General).
+CleanSL is developed to digitize and streamline municipal waste management. The mobile application is architected to serve two distinct user bases with highly optimized interfaces. It focuses on real-time transparency, scheduling, and environmental impact tracking for residents, while prioritizing low-friction, high-speed reporting and route management for frontline drivers.
 
-Recent Activity Log: A filterable and searchable history of all user interactions. The intelligent routing system seamlessly navigates users to either their completed pickup certificates or the detailed status pages of their filed complaints.
+---
 
-Pickup Scheduling & Reminders: An interactive schedule page displaying in-progress, upcoming, and completed pickups, complete with custom blurred-background reminder dialogs to notify residents before the truck arrives.
+## Core Modules
 
-Driver Interface
-Voice-to-Action Reporting (Low Literacy UX): A highly accessible, one-tap voice recording module. Drivers can report operational issues (e.g., overflowing bins, blocked routes) without typing a single word.
+### Resident Interface
+The resident module is built to provide transparency, educate the public, and offer real-time updates regarding waste collection.
 
-Background Audio Processing: Audio is captured in high-quality WAV format, requesting native microphone permissions, and securely uploaded to a Render-hosted backend for transcription, with files stored via Supabase.
+* **Real-Time Truck Tracking:** Live Google Maps integration polling driver locations via a custom tracking service. Features custom UI markers, automatic camera bounding, and dynamic ETA calculations.
+* **Smart Home Dashboard:** A dynamic "Next Pickup" card that updates its progress bar and status text in real-time, switching seamlessly between scheduled states and active en-route tracking.
+* **Collection Certificates & Impact Tracking:** Every completed pickup generates a digital certificate. Residents can track their personal environmental footprint, viewing dynamic metrics like CO2 emissions prevented, energy saved, and water conserved based on the specific waste category (Organic, Recyclables, General).
+* **Recent Activity Log:** A filterable and searchable history of all user interactions. Intelligent routing seamlessly navigates users to either their completed pickup certificates or the detailed status pages of their filed complaints.
+* **Pickup Scheduling & Reminders:** An interactive schedule page displaying in-progress, upcoming, and completed pickups, utilizing custom blurred-background reminder dialogs.
 
-Report History: An integrated history screen that fetches past transcriptions from the backend and utilizes an audio player to allow drivers to listen to their previously submitted reports.
+### Driver Interface
+The driver module is built for efficiency, specifically targeting frontline workers who require low-friction, fast interactions.
 
-Driver Profile & Fleet Assignment: Dynamic profiles displaying the driver's Employee ID, active Assigned District, and Primary Vehicle details.
+* **Voice-to-Action Reporting:** A highly accessible, one-tap voice recording module. Drivers can report operational issues (e.g., overflowing bins, blocked routes) without typing.
+* **Background Audio Processing:** Audio is captured in high-quality WAV format and securely uploaded to a backend for transcription, allowing the driver to continue their route uninterrupted.
+* **Report History:** An integrated history screen fetching past transcriptions, utilizing an audio player to allow drivers to listen to previously submitted reports.
+* **Driver Profile & Fleet Assignment:** Dynamic profiles displaying the driver's Employee ID, active Assigned District, and Primary Vehicle details.
+* **Route & Ward Selection:** A streamlined, visual grid for drivers to select their active sector and launch their specific route paths.
 
-Route & Ward Selection: A streamlined, visual grid for drivers to select their active sector and launch their specific route paths (e.g., Bambalapitiya Route).
+---
 
-Technical Stack
-Frontend Framework: Flutter (Dart)
+## Technical Stack
 
-Mapping & Geolocation: Google Maps Flutter
+| Component | Technology / Package | Description |
+| :--- | :--- | :--- |
+| **Frontend Framework** | Flutter (Dart) | Cross-platform mobile development |
+| **Mapping & Geolocation** | Google Maps Flutter | Live tracking, custom markers, and bounding |
+| **Audio Engine** | `record`, `audioplayers` | Low-latency voice capture and playback |
+| **Networking & APIs** | `http` | REST API communication (Render backend integration) |
+| **Storage** | Supabase | Secure cloud storage for audio files and assets |
+| **State Management** | Stateful Widgets, Streams | Timer-based polling and stream subscriptions for live updates |
+| **UI/UX & Theming** | Custom `AppTheme` | 8pt grid system, responsive scaling, Google Fonts (Inter, Roboto Slab) |
 
-Audio Engine: record (for low-latency voice capture), audioplayers (for playback)
+---
 
-Networking & APIs: http package for REST API communication (Render backend integration)
+## Project Structure
 
-Storage: Supabase (for audio file and asset storage)
+The project follows a feature-first, modular architecture to ensure maintainability and separation of concerns across the SDGP team:
 
-State Management & Real-time: Stateful UI management combined with Stream Subscriptions and Timer-based polling for live map updates.
+```text
+lib/
+├── core/
+│   ├── services/          # Shared backend services, API integrations, and Supabase logic
+│   ├── theme/             # Global AppTheme, colors, and typography definitions
+│   └── utils/             # Responsive scaling utilities and shared constants
+├── features/
+│   ├── common/            # Shared features across user roles
+│   │   └── onboarding/    # Welcome screens and role selection (Resident vs. Driver)
+│   ├── driver/            # Driver-specific domain
+│   │   ├── driver_auth/   # Driver authentication flow and sign-in pages
+│   │   └── home/          # Dashboard, Ward Selection, Route logic, and Voice Reports
+│   └── resident/          # Resident-specific domain
+│       ├── complaints/    # Issue reporting, photo uploads, and status tracking
+│       ├── guide/         # Educational content, disposal tips, and waste sorting rules
+│       ├── home/          # Smart Dashboard, ETA cards, and Recent Activity log
+│       ├── main_nav/      # Bottom navigation bar and primary routing logic
+│       ├── profile/       # Resident account settings and preferences
+│       ├── resident_auth/ # Resident authentication flow (Sign up / Log in)
+│       └── schedule/      # Live Tracking, Certificates, Reminders, and Route maps
+├── shared/
+│   └── widgets/           # Reusable UI components (e.g., CleanSlButton, Status Pills)
+└── main.dart              # Application entry point
 
-UI/UX & Theming: A strictly enforced custom AppTheme utilizing an 8pt grid system, responsive scaling utilities, and Google Fonts (Inter for body text, Roboto Slab for headers).
-
-Project Structure Highlights
-The project follows a feature-first, modular architecture to ensure maintainability across the SDGP team:
-
-core/: Contains the global AppTheme, responsive utilities, and shared constants.
-
-shared/widgets/: Reusable UI components like the CleanSlButton.
-
-features/driver/: Encapsulates all driver-specific logic, UI, and data models (Voice Recording, Profile, Ward Selection).
-
-features/resident/: Contains the resident dashboard, live tracking maps, scheduling, complaints, and activity logs.
 
 Academic Context
-This application is developed as the practical implementation for a 2nd-year Bsc (Hons) Computer Science Software Development Group Project (SDGP). It demonstrates the practical application of mobile UX design, real-time data handling, external API integration, and hardware-level feature access (Microphone and GPS).
+This application is developed as the practical implementation for a 2nd-year Bsc (Hons) Computer Science Software Development Group Project (SDGP). It demonstrates the practical application of mobile UX design, real-time data handling, external REST API integration, and hardware-level feature access (Microphone and GPS).

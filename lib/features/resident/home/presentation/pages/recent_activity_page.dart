@@ -3,19 +3,48 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../../complaints/data/complaint_model.dart';
 import '../../../complaints/presentation/pages/complaint_details_page.dart';
+import '../../../schedule/presentation/pages/completed_pickup_page.dart';
 
-// --- 1. DATA MODEL ---
-// This represents a single activity. Later, Husni's backend will provide this data.
+// --- 1. DATA MODELS ---
+class CompletedPickupInfo {
+  final String title;
+  final String subtitle;
+  final String imagePath;
+  final String certificateId;
+  final String date;
+  final String location;
+  final String wasteType;
+  final String collectedBy;
+  final String impactMessage;
+  final Color themeColor;
+  final IconData impactIcon;
+
+  CompletedPickupInfo({
+    required this.title,
+    required this.subtitle,
+    required this.imagePath,
+    required this.certificateId,
+    required this.date,
+    required this.location,
+    required this.wasteType,
+    required this.collectedBy,
+    required this.impactMessage,
+    required this.themeColor,
+    required this.impactIcon,
+  });
+}
+
 class ActivityItem {
   final String title;
   final IconData icon;
   final Color iconColor;
   final Color iconBgColor;
-  final String category; // 'Pickups' or 'Reports'
+  final String category; 
   final String? statusText;
   final List<Map<IconData, String>> details;
   final String actionText;
   final Complaint? complaint;
+  final CompletedPickupInfo? completedPickup; 
 
   ActivityItem({
     required this.title,
@@ -27,6 +56,7 @@ class ActivityItem {
     required this.details,
     required this.actionText,
     this.complaint,
+    this.completedPickup,
   });
 }
 
@@ -41,8 +71,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
   String _selectedFilter = 'All';
   String _searchQuery = '';
 
-  // --- 2. THE DATA SOURCE ---
+  // --- 2. THE DATA SOURCE (Aligned with Schedule Page) ---
   final List<ActivityItem> _allActivities = [
+    // 1. RECYCLING PICKUP
     ActivityItem(
       title: "Recycling Pickup Completed",
       icon: Icons.recycling_rounded,
@@ -50,11 +81,25 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       iconBgColor: AppTheme.accentColor.withValues(alpha: 0.15),
       category: 'Pickups',
       details: [
-        {Icons.calendar_today_rounded: "Oct 24, 2023 • 09:15 AM"},
-        {Icons.location_on_rounded: "123 Maple Avenue"},
+        {Icons.calendar_today_rounded: "Oct 07, 2023 • 09:15 AM"},
+        {Icons.location_on_rounded: "42nd Lane, Wellawatte"},
       ],
       actionText: "VIEW DETAILS",
+      completedPickup: CompletedPickupInfo(
+        title: "Successfully Collected",
+        subtitle: "Your recyclable materials have been sorted and sent to processing facilities.",
+        imagePath: 'assets/img/recyclable_waste.jpg',
+        certificateId: "#CSL-REC-8821",
+        date: "October 07, 2023 • 09:15 AM",
+        location: "42nd Lane, Wellawatte",
+        wasteType: "Recyclables (Metal/Glass)",
+        collectedBy: "EcoCollector Team B-12",
+        impactMessage: "You helped save 45 liters of water and 12 kWh of energy through recycling!",
+        themeColor: AppTheme.accentColor,
+        impactIcon: Icons.water_drop_rounded,
+      ),
     ),
+    // 2. COMPLAINT
     ActivityItem(
       title: "Issue Reported: Overflowing Bin",
       icon: Icons.warning_rounded,
@@ -79,17 +124,33 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
         assignedTo: "Field Team B",
       ),
     ),
+    // 3. ORGANIC WASTE PICKUP (Synced with Schedule Page)
     ActivityItem(
-      title: "General Waste Collected",
-      icon: Icons.delete_rounded,
-      iconColor: Colors.blue.shade600,
-      iconBgColor: Colors.blue.shade50,
+      title: "Organic Waste Collected",
+      icon: Icons.eco_rounded, 
+      iconColor: AppTheme.accentColor,
+      iconBgColor: AppTheme.accentColor.withValues(alpha: 0.15),
       category: 'Pickups',
       details: [
-        {Icons.calendar_today_rounded: "Oct 22, 2023 • 07:30 AM"},
+        {Icons.calendar_today_rounded: "Oct 04, 2023 • 08:45 AM"},
+        {Icons.location_on_rounded: "42nd Lane, Wellawatte"},
       ],
       actionText: "RECEIPT",
+      completedPickup: CompletedPickupInfo(
+        title: "Successfully Collected",
+        subtitle: "Your organic waste has been processed and is ready for composting.",
+        imagePath: 'assets/img/organic_waste.jpg',
+        certificateId: "#CSL-ORG-2231",
+        date: "October 04, 2023 • 08:45 AM",
+        location: "42nd Lane, Wellawatte",
+        wasteType: "Organic Waste",
+        collectedBy: "EcoCollector Team B-12",
+        impactMessage: "This collection prevented approx. 1.8kg of CO2 equivalent from entering the atmosphere.",
+        themeColor: AppTheme.accentColor,
+        impactIcon: Icons.eco_rounded,
+      ),
     ),
+    // 4. RESOLVED COMPLAINT
     ActivityItem(
       title: "Report Resolved: Broken Bin",
       icon: Icons.check_circle_rounded,
@@ -108,7 +169,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
         statusTitle: "Replacement Completed",
         statusDescription: "A replacement bin has been delivered and the damaged bin collected.",
         dateSubmitted: "Oct 05, 2023",
-        fullDescription: "My household bin has a large crack along the side and a broken wheel, making it unusable.",
+        fullDescription: "My household bin has a large crack along the side and a broken wheel.",
         imagePath: 'assets/img/broken_bin.jpg',
         isLocal: true,
         completionDate: "Oct 07",
@@ -116,12 +177,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
     ),
   ];
 
-  // --- 3. FILTERING LOGIC ---
   List<ActivityItem> get _filteredActivities {
     return _allActivities.where((activity) {
-      // Filter by Category
       final matchesCategory = _selectedFilter == 'All' || activity.category == _selectedFilter;
-      // Filter by Search Query
       final matchesSearch = activity.title.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     }).toList();
@@ -134,14 +192,12 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       appBar: AppBar(
         backgroundColor: AppTheme.primaryBackground,
         elevation: 0,
-        scrolledUnderElevation: 0,
         centerTitle: true,
         toolbarHeight: Responsive.h(context, AppTheme.space64),
         title: Text(
           "Recent Activity",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
         ),
-        // FIXED: Removed white circle background from back button
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textColor),
@@ -151,27 +207,18 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, AppTheme.space24)),
-            child: Column(
-              children: [
-                SizedBox(height: Responsive.h(context, AppTheme.space16)),
-                _buildSearchBar(),
-                SizedBox(height: Responsive.h(context, AppTheme.space16)),
-              ],
-            ),
+            child: _buildSearchBar(),
           ),
+          const SizedBox(height: 16),
           _buildFiltersRow(),
-          SizedBox(height: Responsive.h(context, AppTheme.space24)),
-
-          // SCROLLABLE LIST (Dynamic)
+          const SizedBox(height: 24),
           Expanded(
             child: _filteredActivities.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
                     padding: EdgeInsets.symmetric(horizontal: Responsive.w(context, AppTheme.space24)),
                     itemCount: _filteredActivities.length,
-                    itemBuilder: (context, index) {
-                      return _buildActivityCard(context, _filteredActivities[index]);
-                    },
+                    itemBuilder: (context, index) => _buildActivityCard(context, _filteredActivities[index]),
                   ),
           ),
         ],
@@ -179,17 +226,16 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
     );
   }
 
-  // --- WIDGET COMPONENTS ---
-
   Widget _buildSearchBar() {
     return Container(
+      margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(Responsive.r(context, 12)),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: TextField(
-        onChanged: (value) => setState(() => _searchQuery = value), // TRIGGER SEARCH
+        onChanged: (value) => setState(() => _searchQuery = value),
         decoration: InputDecoration(
           hintText: "Search activities...",
           prefixIcon: Icon(Icons.search_rounded, color: Colors.blueGrey.shade300),
@@ -209,9 +255,9 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       child: Row(
         children: [
           _buildFilterChip(label: 'All', icon: Icons.done_all_rounded, isSelected: _selectedFilter == 'All'),
-          SizedBox(width: Responsive.w(context, 12)),
+          const SizedBox(width: 12),
           _buildFilterChip(label: 'Pickups', icon: Icons.local_shipping_rounded, isSelected: _selectedFilter == 'Pickups'),
-          SizedBox(width: Responsive.w(context, 12)),
+          const SizedBox(width: 12),
           _buildFilterChip(label: 'Reports', icon: Icons.warning_rounded, isSelected: _selectedFilter == 'Reports'),
         ],
       ),
@@ -232,10 +278,13 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
         child: Row(
           children: [
             Icon(icon, size: Responsive.w(context, 18), color: isSelected ? Colors.white : Colors.blueGrey.shade400),
-            SizedBox(width: Responsive.w(context, 8)),
+            const SizedBox(width: 8),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isSelected ? Colors.white : Colors.blueGrey.shade600, fontWeight: isSelected ? FontWeight.bold : FontWeight.w600),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isSelected ? Colors.white : Colors.blueGrey.shade600, 
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600
+                  ),
             ),
           ],
         ),
@@ -244,12 +293,19 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
   }
 
   Widget _buildActivityCard(BuildContext context, ActivityItem item) {
-    final onTap = item.complaint == null ? null : () => _openComplaintDetails(context, item.complaint!);
+    // 1. Function declaration for tap handling
+    void handleTap() {
+      if (item.complaint != null) {
+        _openComplaintDetails(context, item.complaint!);
+      } else if (item.completedPickup != null) {
+        _openCompletedPickupDetails(context, item.completedPickup!);
+      }
+    }
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: handleTap,
         borderRadius: BorderRadius.circular(Responsive.r(context, 16)),
         child: Container(
           margin: EdgeInsets.only(bottom: Responsive.h(context, AppTheme.space16)),
@@ -270,7 +326,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
                     decoration: BoxDecoration(color: item.iconBgColor, shape: BoxShape.circle),
                     child: Icon(item.icon, color: item.iconColor, size: Responsive.w(context, 24)),
                   ),
-                  SizedBox(width: Responsive.w(context, 16)),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,9 +335,11 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
                           item.title,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textColor),
                         ),
-                        if (item.statusText != null) ...[SizedBox(height: Responsive.h(context, 8)), _buildStatusPill(item.statusText!, item.iconColor, item.iconBgColor)],
-                        SizedBox(height: Responsive.h(context, 12)),
-                        // Map details list to detail rows
+                        if (item.statusText != null) ...[
+                          const SizedBox(height: 8), 
+                          _buildStatusPill(item.statusText!, item.iconColor, item.iconBgColor)
+                        ],
+                        const SizedBox(height: 12),
                         ...item.details.map((detail) {
                           final entry = detail.entries.first;
                           return _buildDetailRow(entry.key, entry.value);
@@ -291,16 +349,17 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
                   ),
                 ],
               ),
-              SizedBox(height: Responsive.h(context, 16)),
-              Row(mainAxisAlignment: MainAxisAlignment.end, children: [_buildActionButton(item.actionText, onTap)]),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end, 
+                children: [_buildActionButton(item.actionText, handleTap)],
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
-  // --- SMALL HELPER WIDGETS ---
 
   Widget _buildStatusPill(String text, Color color, Color bg) {
     return Container(
@@ -319,7 +378,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       child: Row(
         children: [
           Icon(icon, size: Responsive.w(context, 16), color: Colors.blueGrey.shade400),
-          SizedBox(width: Responsive.w(context, 8)),
+          const SizedBox(width: 8),
           Text(text, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.blueGrey.shade600)),
         ],
       ),
@@ -348,5 +407,26 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
 
   void _openComplaintDetails(BuildContext context, Complaint complaint) {
     Navigator.push(context, MaterialPageRoute(builder: (context) => ComplaintDetailsPage(complaint: complaint)));
+  }
+
+  void _openCompletedPickupDetails(BuildContext context, CompletedPickupInfo info) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CompletedPickupDetailsPage(
+          title: info.title,
+          subtitle: info.subtitle,
+          imagePath: info.imagePath,
+          certificateId: info.certificateId,
+          date: info.date,
+          location: info.location,
+          wasteType: info.wasteType,
+          collectedBy: info.collectedBy,
+          impactMessage: info.impactMessage,
+          themeColor: info.themeColor,
+          impactIcon: info.impactIcon,
+        ),
+      ),
+    );
   }
 }

@@ -9,7 +9,7 @@ import '../../../../../../core/utils/responsive.dart';
 import '../../../home/data/live_pickup_tracking_model.dart';
 import '../../../home/data/resident_live_tracking_service.dart';
 
-class LiveTrackingPage extends StatefulWidget {
+class OngoingPickupsPage extends StatefulWidget {
   // --- TEMPLATE PARAMETERS (Passed from Card) ---
   final String wasteType;
   final String zone;
@@ -20,7 +20,7 @@ class LiveTrackingPage extends StatefulWidget {
   final IconData wasteIcon;
   final List<String> checklistItems;
 
-  const LiveTrackingPage({
+  const OngoingPickupsPage({
     super.key,
     required this.wasteType,
     required this.zone,
@@ -33,10 +33,10 @@ class LiveTrackingPage extends StatefulWidget {
   });
 
   @override
-  State<LiveTrackingPage> createState() => _LiveTrackingPageState();
+  State<OngoingPickupsPage> createState() => _OngoingPickupsPageState();
 }
 
-class _LiveTrackingPageState extends State<LiveTrackingPage> {
+class _OngoingPickupsPageState extends State<OngoingPickupsPage> {
   // 1. TOGGLE: Keep dummy map visible while real-time runs in background
   final bool _showDemoDummyMapOnly = true;
 

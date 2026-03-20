@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
-import '../pages/live_tracking_page.dart';
+import '../pages/ongoing_pickups.dart';
 
 class LiveTrackingCard extends StatefulWidget {
   final String wasteType;
@@ -255,7 +255,7 @@ class _LiveTrackingCardState extends State<LiveTrackingCard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LiveTrackingPage(
+                  builder: (context) => OngoingPickupsPage(
                     wasteType: widget.wasteType,
                     zone: widget.zone,
                     team: widget.team,

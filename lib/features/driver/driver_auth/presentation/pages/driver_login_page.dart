@@ -3,7 +3,7 @@ import '../../../../../core/utils/responsive.dart';
 import '../../../../../shared/widgets/cleansl_mobnum_input.dart';
 import '../../../../../shared/widgets/cleansl_button.dart';
 import '../../../../common/onboarding/presentation/widgets/auth_screen_template.dart';
-import '../../../../../core/services/auth_service.dart';
+// import '../../../../../core/services/auth_service.dart';
 
 class DriverLoginPage extends StatefulWidget {
   const DriverLoginPage({super.key});
@@ -30,19 +30,14 @@ class _DriverLoginPageState extends State<DriverLoginPage> {
 
   Future<void> _handleSendOtp() async {
     setState(() => _isLoading = true);
-    try {
-      await AuthService().sendDriverOTP(mobile: _mobileController.text.trim());
-      if (mounted) {
-        Navigator.pushNamed(context, '/driver-otp', arguments: _mobileController.text.trim());
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    
+    // ⚠️ BYPASS: Faking a 1-second network call for the UI
+    await Future.delayed(const Duration(seconds: 1));
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      // Move straight to the OTP page without hitting Supabase
+      Navigator.pushNamed(context, '/driver-otp', arguments: _mobileController.text.trim());
     }
   }
 

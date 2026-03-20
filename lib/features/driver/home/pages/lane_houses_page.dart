@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
+import 'driver_voice_record_page.dart';
 
 class LaneHousesPage extends StatefulWidget {
   final String laneName;
@@ -16,23 +17,36 @@ class _LaneHousesPageState extends State<LaneHousesPage> {
   // This Set keeps track of which houses have been marked with an issue.
   final Set<int> _housesWithIssues = {};
 
-  void _reportIssue(int houseNumber) {
-    // 1. Instantly turn the house red
-    setState(() {
-      _housesWithIssues.add(houseNumber);
-    });
-
-    // 2. Navigate to the dummy Voice Record page (We will build the real one next!)
-    Navigator.push(
+  Future<void> _reportIssue(int houseNumber) async {
+    // 1. Navigate to the Voice page and WAIT for the result
+    final bool? issueConfirmed = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: AppTheme.primaryBackground,
-          appBar: AppBar(backgroundColor: AppTheme.primaryBackground),
-          body: Center(child: Text("Voice Record Page for House $houseNumber\n(To be built next!)", textAlign: TextAlign.center)),
+        builder: (context) => VoiceRecordPage(
+          laneName: widget.laneName,
+          houseNumber: houseNumber,
         ),
       ),
     );
+
+    // 2. If the driver clicked 'Confirm & Submit', it returns true. 
+    // ONLY THEN do we turn the house red.
+    if (issueConfirmed == true) {
+      setState(() {
+        _housesWithIssues.add(houseNumber);
+      });
+      
+      // Optional: Show a quick success snackbar on the grid page!
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Issue reported for House $houseNumber"),
+            backgroundColor: AppTheme.accentColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override

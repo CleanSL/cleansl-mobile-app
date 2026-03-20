@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
 import 'bambalapitiya_route_page.dart';
+import 'driver_profile_page.dart';
 
 // --- DATA MODEL ---
 class WasteWard {
@@ -94,10 +95,15 @@ class _DriverHomePageState extends State<DriverHomePage> {
             ),
           ],
         ),
-        CircleAvatar(
-          radius: Responsive.r(context, 22),
-          backgroundColor: AppTheme.accentColor,
-          child: Icon(Icons.person_rounded, color: AppTheme.secondaryColor2, size: Responsive.w(context, 24)),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => DriverProfilePage()));
+          },
+          child: CircleAvatar(
+            radius: Responsive.r(context, 22),
+            backgroundColor: AppTheme.accentColor,
+            child: Icon(Icons.person_rounded, color: AppTheme.secondaryColor2, size: Responsive.w(context, 24)),
+          ),
         ),
       ],
     );
@@ -157,10 +163,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return GestureDetector(
       onTap: () {
         if (_selectedWard.name == 'Bambalapitiya') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const BambalapitiyaRoutePage()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const BambalapitiyaRoutePage()));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

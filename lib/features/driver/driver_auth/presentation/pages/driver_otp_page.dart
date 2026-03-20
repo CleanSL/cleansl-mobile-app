@@ -39,24 +39,20 @@ class _DriverOtpPageState extends State<DriverOtpPage> {
           variant: ButtonVariant.primary,
           onPressed: _otp.length == 4
               ? () {
-                  // BYPASS: Accept any 4 digits and go straight to the Driver Dashboard
-                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text("OTP Verified! Logging in...", textAlign: TextAlign.center),
+                      content: const Text(
+                        "OTP Verified Successfully!",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppTheme.primaryBackground, fontWeight: FontWeight.w500),
+                      ),
                       backgroundColor: AppTheme.accentColor,
                       behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.only(bottom: Responsive.h(context, 32), left: Responsive.w(context, 48), right: Responsive.w(context, 48)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Responsive.r(context, 30))),
-                      duration: const Duration(seconds: 1),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
-
-                  // Navigate to your new Driver Home Page (Make sure to add this route to main.dart!)
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    if (context.mounted) {
-                      Navigator.pushReplacementNamed(context, '/driver-home'); 
-                    }
-                  });
                 }
               : null,
         ),

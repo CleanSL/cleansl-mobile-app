@@ -10,17 +10,23 @@ import 'core/services/firebase_options.dart';
 
 // Import custom theme file
 import 'core/theme/app_theme.dart';
-// Import feature pages
+// Import oboarding pages
 import 'features/common/onboarding/presentation/pages/language_selection_page.dart';
 import 'features/common/onboarding/presentation/pages/role_selection_page.dart';
+
+// Import driver auth pages
 import 'features/driver/driver_auth/presentation/pages/driver_login_page.dart';
 import 'features/driver/driver_auth/presentation/pages/driver_otp_page.dart';
+
+// Import resident auth pages
 import 'features/resident/resident_auth/presentation/pages/resident_auth_hub_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_login_page.dart';
 import 'features/resident/resident_auth/presentation/pages/resident_signup_page.dart';
 import 'features/resident/resident_auth/presentation/pages/forgot_password_page.dart';
 import 'features/resident/resident_auth/presentation/pages/forgot_password_verify_page.dart';
 import 'features/resident/resident_auth/presentation/pages/reset_password_page.dart';
+
+// Import resident main nav and other pages
 import 'features/resident/home/presentation/pages/notifications_page.dart';
 import 'features/resident/guide/presentation/pages/guide_main_page.dart';
 import 'features/resident/main_nav/presentation/pages/resident_main_nav_page.dart';
@@ -28,6 +34,9 @@ import 'features/resident/guide/presentation/pages/organic_waste_page.dart';
 import 'features/resident/guide/presentation/pages/recyclables_page.dart';
 import 'features/resident/guide/presentation/pages/non_recyclable_page.dart';
 import 'features/resident/home/presentation/pages/recent_activity_page.dart';
+
+// Import driver main nav and other pages
+import 'features/driver/home/pages/driver_home_page.dart';
 
 // 2. Change main to be an asynchronous function
 Future<void> main() async {
@@ -94,23 +103,33 @@ class SmartResidentApp extends StatelessWidget {
 
       // Define the routes for navigation
       routes: {
+        // Onboarding flow
         '/language': (context) => const LanguageSelectionPage(),
         '/role': (context) => const RoleSelectionPage(),
+
+        // Driver Auth flow
         '/driver-login': (context) => const DriverLoginPage(),
         '/driver-otp': (context) => const DriverOtpPage(),
+
+        // Resident Auth flow
         '/resident-auth-hub': (context) => const ResidentAuthHubPage(),
         '/resident-login': (context) => const ResidentLoginPage(),
         '/resident-signup': (context) => const ResidentSignUpPage(),
-        '/resident-main': (context) => const ResidentMainNavPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/forgot-password-verify': (context) => const ForgotPasswordVerifyPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
+
+        // Resident Main Navigation and other pages 
+        '/resident-main': (context) => const ResidentMainNavPage(),
         '/notifications': (context) => const NotificationsPage(),
         '/guide': (context) => const GuideMainPage(),
         '/organic-waste': (context) => const OrganicWastePage(),
         '/recyclables': (context) => const RecyclablesPage(),
         '/non-recyclables': (context) => const NonRecyclablePage(),
         '/recent-activity': (context) => const RecentActivityPage(),
+
+        // Driver Main Navigation and other pages
+        '/driver-home': (context) => const DriverHomePage(),
       },
     );
   }

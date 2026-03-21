@@ -15,7 +15,7 @@ import '../../../complaints/presentation/pages/file_complaint_page.dart';
 import '../../../guide/presentation/pages/guide_main_page.dart';
 import 'notifications_page.dart';
 import 'recent_activity_page.dart';
-import '../../../schedule/presentation/pages/live_tracking_page.dart';
+import '../../../schedule/presentation/pages/ongoing_pickups.dart';
 
 class ResidentHomePage extends StatefulWidget {
   const ResidentHomePage({super.key});
@@ -605,7 +605,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => LiveTrackingPage(
+                    builder: (context) => OngoingPickupsPage(
                       wasteType: "Ongoing Pickup",
                       zone: "Truck: $_demoTruckArea\nYou: $_demoResidentArea",
                       team: "Team C-04",
@@ -700,82 +700,180 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
   }
 
   Widget _buildNextPickupCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Next Pickup", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-                child: Row(
-                  children: const [
-                    Icon(Icons.schedule_rounded, color: AppTheme.accentColor, size: 14),
-                    SizedBox(width: 4),
+    // 1. Setup Dynamic Variables (Default to Demo Data)
+    String wasteType = "Organic Waste";
+    String timeStr = "10:30";
+    String amPm = "AM";
+    String statusText = "Driver is 2 stops away";
+    String etaTimeStr = "45m";
+    String etaDistanceStr = "1.5km";
+    String zoneStr = "Truck: $_demoTruckArea\nYou: $_demoResidentArea";
+    String teamStr = "Team C-04";
+    double progressValue = 0.6; // Demo progress (60%)
+
+    // 2. Override with Real-Time Data if Live Mode is active
+    if (!_showDemoDummyMapOnly) {
+      if (_isLiveDataLoading) {
+        wasteType = "Syncing...";
+        timeStr = "--:--";
+        amPm = "";
+        statusText = "Connecting to live updates...";
+        progressValue = 0.0;
+      } else if (_livePickup == null) {
+        wasteType = "No Pickups";
+        timeStr = "--:--";
+        amPm = "";
+        statusText = "You are all caught up for today!";
+        progressValue = 0.0;
+      } else {
+        wasteType = "Organic Waste"; 
+        zoneStr = _livePickup!.areaName;
+        
+        if (_livePickup!.scheduledTime != null) {
+          timeStr = DateFormat('h:mm').format(_livePickup!.scheduledTime!);
+          amPm = DateFormat('a').format(_livePickup!.scheduledTime!).toUpperCase();
+        } else {
+          timeStr = "TBD";
+          amPm = "";
+        }
+
+        if (_livePickup!.status == LivePickupStatus.ongoing) {
+          final eta = _livePickup!.etaMinutes;
+          if (eta != null) {
+            statusText = "Arriving in $eta mins";
+            etaTimeStr = "${eta}m";
+            progressValue = 0.8; // 80% progress if ongoing
+          } else {
+            statusText = "Pickup is in progress";
+            etaTimeStr = "En route";
+            progressValue = 0.5; // 50% progress
+          }
+        } else {
+          statusText = "Upcoming pickup scheduled";
+          etaTimeStr = "--";
+          progressValue = 0.1; // 10% progress if scheduled but not started
+        }
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        // Prevent navigation if there is no actual live pickup
+        if (!_showDemoDummyMapOnly && _livePickup == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('No active pickups to track today.'),
+              backgroundColor: AppTheme.secondaryColor1,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+          );
+          return;
+        }
+
+        // Navigate passing the dynamic data to the details page
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => OngoingPickupsPage(
+            wasteType: wasteType,
+            zone: zoneStr,
+            team: teamStr,
+            etaTime: etaTimeStr,
+            etaDistance: etaDistanceStr,
+            themeColor: AppTheme.accentColor,
+            wasteIcon: Icons.recycling_rounded,
+            checklistItems: const [
+              "Bins washed and clean",
+              "Plastics sorted together",
+              "Cardboard flattened"
+            ],
+          ),
+        ));
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(Responsive.r(context, 24)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Next Pickup", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.schedule_rounded, color: AppTheme.accentColor, size: 14),
+                      SizedBox(width: 4),
+                      Text(
+                        "Today",
+                        style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: Responsive.h(context, 4)),
+            Text(wasteType, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+            SizedBox(height: Responsive.h(context, 16)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(timeStr, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)),
+                    const SizedBox(width: 4),
                     Text(
-                      "Today",
-                      style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
+                      amPm,
+                      style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: Responsive.h(context, 4)),
-          Text("Organic Waste", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
-          SizedBox(height: Responsive.h(context, 16)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text("10:30", style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)),
-                  const SizedBox(width: 4),
-                  Text(
-                    "AM",
-                    style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
-                child: const Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: 32),
-              ),
-            ],
-          ),
-          SizedBox(height: Responsive.h(context, 16)),
-          // Custom Progress Bar
-          Stack(
-            children: [
-              Container(
-                height: 8,
-                width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
-              ),
-              Container(
-                height: 8,
-                width: Responsive.w(context, 200),
-                decoration: BoxDecoration(color: AppTheme.accentColor, borderRadius: BorderRadius.circular(4)),
-              ),
-            ],
-          ),
-          SizedBox(height: Responsive.h(context, 8)),
-          Text("Driver is 2 stops away", style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-        ],
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: AppTheme.accentColor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  child: const Icon(Icons.recycling_rounded, color: AppTheme.accentColor, size: 32),
+                ),
+              ],
+            ),
+            SizedBox(height: Responsive.h(context, 16)),
+            
+            // Dynamic Progress Bar
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Stack(
+                  children: [
+                    Container(
+                      height: 8,
+                      width: double.infinity,
+                      decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
+                    ),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOut,
+                      height: 8,
+                      width: constraints.maxWidth * progressValue,
+                      decoration: BoxDecoration(color: AppTheme.accentColor, borderRadius: BorderRadius.circular(4)),
+                    ),
+                  ],
+                );
+              }
+            ),
+            
+            SizedBox(height: Responsive.h(context, 8)),
+            Text(statusText, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          ],
+        ),
       ),
     );
   }

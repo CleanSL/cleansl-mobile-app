@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../data/live_pickup_tracking_model.dart';
@@ -26,7 +26,7 @@ class ResidentHomePage extends StatefulWidget {
 
 class _ResidentHomePageState extends State<ResidentHomePage> {
   // Username loaded from Supabase
-  String _userName = 'Resident';
+  String _userName = '';
   final bool _showDemoDummyMapOnly = true;
   static const String _demoTruckArea = 'Galle Road, Dehiwala';
   static const String _demoResidentArea = '42nd Lane, Wellawatte';
@@ -75,30 +75,39 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
     _prepareDemoMarkerIcons();
   }
 
+  Future<void> _loadUserName() async {
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Fetch from users table
+      final userRow = await client
+          .from('users')
+          .select('full_name')
+          .eq('id', userId)
+          .maybeSingle();
+
+      String name = (userRow?['full_name'] as String?) ?? '';
+
+      // Fallback: use email prefix
+      if (name.isEmpty) {
+        final email = client.auth.currentUser?.email ?? '';
+        name = email.contains('@') ? email.split('@').first : email;
+      }
+
+      if (mounted) setState(() => _userName = name);
+    } catch (_) {
+      // Keep empty string — greeting still shows without a name
+    }
+  }
+
   @override
   void dispose() {
     _pickupRowsSubscription?.cancel();
     _driverLocationPollingTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadUserName() async {
-    try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) return;
-      final data = await Supabase.instance.client
-          .from('users')
-          .select('full_name')
-          .eq('id', userId)
-          .single();
-      final fullName = data['full_name'] as String? ?? 'Resident';
-      if (mounted) {
-        setState(() => _userName = fullName.split(' ').first);
-      }
-    } catch (_) {
-      // Falls back to 'Resident' silently
-    }
   }
 
   Future<void> _initializeLiveTracking() async {
@@ -528,7 +537,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-            "Hello, $_userName",
+              _userName.isEmpty ? "Hello!" : "Hello, $_userName",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontWeight: FontWeight.bold, letterSpacing: 1.1),
             ),
             SizedBox(height: Responsive.h(context, 4)),

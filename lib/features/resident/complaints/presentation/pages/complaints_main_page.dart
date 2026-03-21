@@ -1,10 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../../../../../core/constants/api_constants.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
 import '../../data/complaint_model.dart';
@@ -25,7 +20,36 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
   bool _isAscending = false;
   String? _errorMessage;
 
-  List<Complaint> _allComplaints = [];
+  List<Complaint> _allComplaints = [];   // real DB complaints
+
+  // ─── Frontend person's demo data (kept to show the UI design) ────────────
+  final List<Complaint> _dummyComplaints = [
+    Complaint(
+      id: 'DEMO-8795',
+      category: 'Overflowing Bin',
+      status: 'In Progress',
+      statusTitle: 'Field Team Assigned',
+      statusDescription: 'A field team has been dispatched to resolve the issue.',
+      dateSubmitted: 'Oct 10, 2023',
+      fullDescription: 'Public bin at the corner of 5th Ave is overflowing and causing a health hazard.',
+      imagePath: 'assets/img/evidence_overflowing.jpg',
+      assignedTo: 'Field Team B',
+      isLocal: true,
+    ),
+    Complaint(
+      id: 'DEMO-8612',
+      category: 'Broken Bin',
+      status: 'Resolved',
+      statusTitle: 'Issue Resolved',
+      statusDescription: 'The issue has been successfully resolved. Thank you!',
+      dateSubmitted: 'Oct 05, 2023',
+      fullDescription: 'My household bin has a large crack along the side and a broken wheel, making it unusable.',
+      imagePath: 'assets/img/evidence_broken.jpg',
+      completionDate: 'Oct 07',
+      assignedTo: 'CleanSL Field Team · Staff #442',
+      isLocal: true,
+    ),
+  ];
 
   @override
   void initState() {
@@ -47,32 +71,28 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
     });
 
     try {
-      final token = Supabase.instance.client.auth.currentSession?.accessToken ?? '';
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) throw Exception('Not logged in');
 
-      final response = await http
-          .get(
-            Uri.parse(ApiConstants.complaintsUrl),
-            headers: {'Authorization': 'Bearer $token'},
-          )
-          .timeout(const Duration(seconds: 10));
+      final data = await client
+          .from('complaints')
+          .select('*')
+          .eq('resident_id', userId)
+          .order('created_at', ascending: false);
 
       if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final List<dynamic> raw = data['complaints'] ?? [];
-        setState(() {
-          _allComplaints = raw.map((j) => Complaint.fromJson(j as Map<String, dynamic>)).toList();
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Server returned ${response.statusCode}');
-      }
+      setState(() {
+        _allComplaints = (data as List<dynamic>)
+            .map((j) => Complaint.fromJson(j as Map<String, dynamic>))
+            .toList();
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Could not load complaints.\nMake sure the backend is running.';
+        _errorMessage = 'Could not load complaints.\n$e';
       });
     }
   }
@@ -199,14 +219,18 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
     );
   }
 
+  // Merge: real DB complaints first (newest top), then dummy demo data below
+  List<Complaint> _merged() => [..._allComplaints, ..._dummyComplaints];
+
   List<Complaint> _filtered() {
+    final all = _merged();
     if (_selectedFilter == 'Active') {
-      return _allComplaints.where((c) => c.status != 'Resolved').toList();
+      return all.where((c) => c.status != 'Resolved').toList();
     }
     if (_selectedFilter == 'Resolved') {
-      return _allComplaints.where((c) => c.status == 'Resolved').toList();
+      return all.where((c) => c.status == 'Resolved').toList();
     }
-    return _allComplaints;
+    return all;
   }
 
   Widget _buildFiltersRow() {

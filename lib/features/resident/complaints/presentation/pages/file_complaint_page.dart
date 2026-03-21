@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,6 +28,11 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
 
   final MLService _mlService = MLService();
   bool _isMLProcessing = false;
+
+  // AI analysis result (shown after photo analysis, before submission)
+  String? _mlLabel;
+  double? _mlConfidence;
+  bool _mlAnalyzed = false;
 
   final List<String> _issueCategories = [
     'Waste Sorting Issue',
@@ -58,16 +62,47 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
       imageQuality: 85,
     );
     if (image != null) {
-      setState(() => _evidenceImage = File(image.path));
+      setState(() {
+        _evidenceImage = File(image.path);
+        // Reset ML result when a new photo is taken
+        _mlAnalyzed = false;
+        _mlLabel = null;
+        _mlConfidence = null;
+      });
     }
   }
 
-  // ─── MAIN SUBMISSION LOGIC ────────────────────────────────────────────────
+  // ─── STEP 1: Analyse image and show result card ───────────────────────────
+
+  Future<void> _analyzeImage() async {
+    if (_evidenceImage == null) return;
+    setState(() => _isMLProcessing = true);
+    try {
+      final result = await _mlService.predict(_evidenceImage!);
+      final label      = result['label']      as String;
+      final confidence = result['confidence'] as double;
+      setState(() {
+        _mlLabel      = label;
+        _mlConfidence = confidence;
+        _mlAnalyzed   = true;
+        _isMLProcessing = false;
+      });
+    } catch (e) {
+      setState(() => _isMLProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI analysis failed: $e')),
+        );
+      }
+    }
+  }
+
+  // ─── STEP 2: Submit complaint ─────────────────────────────────────────────
 
   Future<void> _submitComplaintWithML() async {
     if (_evidenceImage == null || _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a category and add evidence.")),
+        const SnackBar(content: Text('Please select a category and add evidence.')),
       );
       return;
     }
@@ -77,24 +112,22 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
     try {
       final supabaseClient = Supabase.instance.client;
 
-      String? materialLabel;
-      double? aiConfidence;
-      int aiSortedPercentage = 0;
+      // Use stored ML result (already analysed in Step 1)
+      final String? materialLabel     = _mlLabel;
+      final double? aiConfidence      = _mlConfidence;
+      final int    aiSortedPercentage = _mlAnalyzed
+          ? ((_mlConfidence ?? 0) * 100).round()
+          : 0;
 
-      // BRANCH 1: Run ML only for Waste Sorting Issue
-      if (_selectedCategory == 'Waste Sorting Issue') {
-        final mlResult = await _mlService.predict(_evidenceImage!);
-        materialLabel = mlResult['label'] as String;
-        aiConfidence = mlResult['confidence'] as double;
-        aiSortedPercentage = (aiConfidence * 100).round();
-
-        // Low-confidence warning
-        if (aiConfidence < 0.6 && mounted) {
-          final proceed = await _showLowConfidenceDialog();
-          if (!proceed) {
-            setState(() => _isMLProcessing = false);
-            return;
-          }
+      // Low-confidence warning (only for Waste Sorting Issue)
+      if (_selectedCategory == 'Waste Sorting Issue' &&
+          _mlAnalyzed &&
+          (_mlConfidence ?? 0) < 0.6 &&
+          mounted) {
+        final proceed = await _showLowConfidenceDialog();
+        if (!proceed) {
+          setState(() => _isMLProcessing = false);
+          return;
         }
       }
 
@@ -128,43 +161,43 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
         addressId = addr?['id'] as String?;
       }
 
-      // POST to Node.js backend with auth header
-      final token = supabaseClient.auth.currentSession?.accessToken ?? '';
-      final response = await http.post(
-        Uri.parse(ApiConstants.complaintsUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'photoUrl': photoUrl,
-          'addressId': addressId,
-          'aiSortedPercentage': aiSortedPercentage,
-          'complaintText': _descriptionController.text.isNotEmpty
-              ? _descriptionController.text
-              : null,
-          'materialLabel': materialLabel,
-          'aiConfidence': aiConfidence,
-          'category': _selectedCategory,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      // Calculate priority level locally (same logic as backend)
+      String priorityLevel;
+      if (aiSortedPercentage >= 85) {
+        priorityLevel = 'high';
+      } else if (aiSortedPercentage >= 60) {
+        priorityLevel = 'medium';
+      } else {
+        priorityLevel = 'low';
+      }
+
+      // Write directly to Supabase (cloud — no firewall issues)
+      await supabaseClient.from('complaints').insert({
+        'resident_id':        userId,
+        'address_id':         addressId,
+        'photo_url':          photoUrl,
+        'ai_sorted_percentage': aiSortedPercentage,
+        'material_label':     materialLabel,
+        'ai_confidence':      aiConfidence,
+        'priority_level':     priorityLevel,
+        'complaint_text':     _descriptionController.text.isNotEmpty
+                                  ? _descriptionController.text
+                                  : null,
+        'location_name':      _selectedCategory,   // stores category
+        'status':             'pending',
+      });
 
       if (!mounted) return;
-
-      if (response.statusCode == 201) {
-        setState(() => _isMLProcessing = false);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ComplaintSuccessPage(
-              referenceId:
-                  "CMC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}",
-            ),
+      setState(() => _isMLProcessing = false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ComplaintSuccessPage(
+            referenceId:
+                "CMC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}",
           ),
-        );
-      } else {
-        throw Exception('Server error ${response.statusCode}: ${response.body}');
-      }
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isMLProcessing = false);
@@ -286,6 +319,55 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
               isProcessing: _isMLProcessing,
             ),
 
+            // ── AI result card (shown after analysis) ──
+            if (_mlAnalyzed && _evidenceImage != null) ...[
+              SizedBox(height: Responsive.h(context, 12)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.shade200, width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AI Detected: ${_mlLabel?.toUpperCase() ?? "UNKNOWN"}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          Text(
+                            'Confidence: ${((_mlConfidence ?? 0) * 100).toStringAsFixed(1)}%',
+                            style: TextStyle(color: Colors.orange.shade700, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() {
+                        _mlAnalyzed   = false;
+                        _mlLabel      = null;
+                        _mlConfidence = null;
+                      }),
+                      child: const Text('Re-Scan'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             SizedBox(height: Responsive.h(context, 24)),
             _buildLocationBox(),
             SizedBox(height: Responsive.h(context, 40)),
@@ -394,19 +476,31 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
   }
 
   Widget _buildSubmitButton() {
+    // For Waste Sorting Issue: first tap = Analyse, second tap = Submit
+    final bool needsAnalysis =
+        _selectedCategory == 'Waste Sorting Issue' &&
+        _evidenceImage != null &&
+        !_mlAnalyzed;
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: _isMLProcessing ? null : _submitComplaintWithML,
+        onPressed: _isMLProcessing
+            ? null
+            : needsAnalysis
+                ? _analyzeImage
+                : _submitComplaintWithML,
         icon: _isMLProcessing
             ? const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
               )
-            : const Icon(Icons.send_rounded, size: 18),
+            : Icon(needsAnalysis ? Icons.analytics_rounded : Icons.send_rounded, size: 18),
         label: Text(
-          _isMLProcessing ? "Submitting..." : "Submit Report",
+          _isMLProcessing
+              ? (needsAnalysis ? 'Analysing...' : 'Submitting...')
+              : (needsAnalysis ? 'Analyse Image' : 'Submit Report'),
           style: Theme.of(context)
               .textTheme
               .labelLarge

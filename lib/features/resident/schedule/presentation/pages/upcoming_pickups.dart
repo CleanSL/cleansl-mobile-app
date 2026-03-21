@@ -7,7 +7,7 @@ import '../../../../../../core/utils/responsive.dart';
 class PickupDetailsPage extends StatefulWidget {
   // --- TEMPLATE PARAMETERS ---
   final String statusLabel; // e.g., "UPCOMING"
-  final String title; // e.g., "General Waste Pickup"
+  final String title; // e.g., "Non-Recyclables Pickup"
   final String date;
   final String time;
   final String wasteType;
@@ -94,7 +94,7 @@ class _PickupDetailsPageState extends State<PickupDetailsPage> {
                   SizedBox(height: Responsive.h(context, 20)),
 
                   // Text Content
-                  Text("Reminder: ${widget.title}", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text("Reminder: ${widget.title.replaceAll('General Waste', 'Non-Recyclables')}", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   SizedBox(height: Responsive.h(context, 8)),
                   Text(
                     "The truck will be at your location at ${widget.time} tomorrow. Please ensure your bin is at the curb.",
@@ -209,7 +209,7 @@ class _PickupDetailsPageState extends State<PickupDetailsPage> {
               ),
             ),
             SizedBox(height: Responsive.h(context, 12)),
-            Text(widget.title, style: Theme.of(context).textTheme.displaySmall),
+            Text(widget.title.replaceAll('General Waste', 'Non-Recyclables'), style: Theme.of(context).textTheme.displaySmall),
             SizedBox(height: Responsive.h(context, 24)),
 
             // 3. DETAILS CARDS

@@ -9,7 +9,7 @@ import '../../../home/data/live_pickup_tracking_model.dart';
 import '../../../home/data/resident_live_tracking_service.dart';
 import '../widgets/live_tracking_card.dart';
 import '../widgets/schedule_calendar.dart';
-import '../pages/pickup_details_page.dart';
+import 'upcoming_pickups.dart';
 import '../pages/completed_pickup_page.dart';
 
 class ScheduleMainPage extends StatefulWidget {
@@ -375,14 +375,14 @@ class _ScheduleMainPageState extends State<ScheduleMainPage> {
             Text("Upcoming", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
             _buildUpcomingCard(context: context, index: 0, dateText: "OCT\n10", title: "Recyclables (Plastic/Paper)", timeText: "Scheduled for 08:30 AM", dateColor: AppTheme.accentColor),
-            _buildUpcomingCard(context: context, index: 1, dateText: "OCT\n13", title: "General Waste", timeText: "Scheduled for 07:00 AM", dateColor: AppTheme.accentColor),
+            _buildUpcomingCard(context: context, index: 1, dateText: "OCT\n13", title: "Non-recyclable Waste", timeText: "Scheduled for 07:00 AM", dateColor: AppTheme.accentColor),
             SizedBox(height: Responsive.h(context, AppTheme.space32)),
 
             // 4. COMPLETED SECTION
             Text("Completed", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: Responsive.h(context, AppTheme.space16)),
-            _buildCompletedCard(context: context, dateText: "OCT\n07", title: "Recyclables (Metal/Glass)", timeText: "Completed at 09:15 AM"),
-            _buildCompletedCard(context: context, dateText: "OCT\n04", title: "Organic Waste", timeText: "Completed at 08:45 AM"),
+            _buildCompletedCard(context: context, dateText: "07", title: "Recyclables (Metal/Glass)", timeText: "Completed at 09:15 AM"),
+            _buildCompletedCard(context: context, dateText: "04", title: "Organic Waste", timeText: "Completed at 08:45 AM"),
           ],
         ),
       ),

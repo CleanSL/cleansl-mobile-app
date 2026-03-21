@@ -47,3 +47,11 @@ app.*.map.json
 
 # Secret environments
 .env
+
+# Standalone complaint module (separate project — not part of this app)
+cleansl-complaint-module-main/
+cleansl-complaint-module-backend-main/
+
+# ML training scripts (not part of the Flutter app)
+train_model.py
+"train_model (1).py"

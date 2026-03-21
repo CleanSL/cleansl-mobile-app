@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
 import 'edit_profile_page.dart';
@@ -11,17 +12,58 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // 1. STATE VARIABLES FOR PROFILE DATA
-  String _userName = "Aravinda Perera";
-  String _userPhone = "+94 77 123 4567";
-  String _userEmail = "aravinda.p@example.com";
-  String _userAddress = "42/A, Flower Road, Colombo 07";
+  String _userName = '';
+  String _userPhone = '';
+  String _userEmail = '';
+  String _userAddress = '';
+  bool _isLoadingProfile = true;
 
   // Mock State for the settings toggles
   bool _pushNotifications = true;
   bool _darkMode = false;
 
-  // 2. NAVIGATION LOGIC
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  // ─── Data Loading ──────────────────────────────────────────────────────────
+
+  Future<void> _loadProfile() async {
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final user = await client
+          .from('users')
+          .select('full_name, phone_number, email')
+          .eq('id', userId)
+          .single();
+
+      final addr = await client
+          .from('addresses')
+          .select('street_address')
+          .eq('resident_id', userId)
+          .maybeSingle();
+
+      if (mounted) {
+        setState(() {
+          _userName    = user['full_name']    as String? ?? '';
+          _userPhone   = user['phone_number'] as String? ?? '';
+          _userEmail   = user['email']        as String? ?? '';
+          _userAddress = addr?['street_address'] as String? ?? '';
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingProfile = false);
+    }
+  }
+
+  // ─── Navigation & Save ─────────────────────────────────────────────────────
+
   Future<void> _navigateToEditProfile() async {
     // Wait for the EditProfilePage to pop and return data
     final updatedData = await Navigator.push(
@@ -34,17 +76,60 @@ class _ProfilePageState extends State<ProfilePage> {
     // If the user hit "Save" (updatedData isn't null), update the UI!
     if (updatedData != null && mounted) {
       setState(() {
-        _userName = updatedData['name'];
-        _userPhone = updatedData['phone'];
-        _userEmail = updatedData['email'];
+        _userName    = updatedData['name'];
+        _userPhone   = updatedData['phone'];
+        _userEmail   = updatedData['email'];
         _userAddress = updatedData['address'];
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated successfully!")));
+
+      // Save to Supabase
+      try {
+        final client = Supabase.instance.client;
+        final userId = client.auth.currentUser?.id;
+        if (userId != null) {
+          await client.from('users').update({
+            'full_name':    _userName,
+            'phone_number': _userPhone,
+            'email':        _userEmail,
+          }).eq('id', userId);
+
+          final existingAddr = await client
+              .from('addresses')
+              .select('id')
+              .eq('resident_id', userId)
+              .maybeSingle();
+
+          if (existingAddr != null) {
+            await client.from('addresses').update({
+              'street_address': _userAddress,
+            }).eq('resident_id', userId);
+          } else {
+            await client.from('addresses').insert({
+              'resident_id':    userId,
+              'street_address': _userAddress,
+            });
+          }
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile updated successfully!")),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Saved locally but DB error: $e")),
+          );
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingProfile) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
@@ -192,8 +277,11 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  // Add logout logic here
+                onPressed: () async {
+                  await Supabase.instance.client.auth.signOut();
+                  if (mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil('/language', (_) => false);
+                  }
                 },
                 icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
                 label: const Text(

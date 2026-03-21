@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_theme.dart';
@@ -24,8 +25,8 @@ class ResidentHomePage extends StatefulWidget {
 }
 
 class _ResidentHomePageState extends State<ResidentHomePage> {
-  // Placeholder for backend data
-  final String userName = "Vinuu";
+  // Username loaded from Supabase
+  String _userName = 'Resident';
   final bool _showDemoDummyMapOnly = true;
   static const String _demoTruckArea = 'Galle Road, Dehiwala';
   static const String _demoResidentArea = '42nd Lane, Wellawatte';
@@ -69,6 +70,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
   @override
   void initState() {
     super.initState();
+    _loadUserName();
     _initializeLiveTracking();
     _prepareDemoMarkerIcons();
   }
@@ -79,6 +81,24 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
     _driverLocationPollingTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+      final data = await Supabase.instance.client
+          .from('users')
+          .select('full_name')
+          .eq('id', userId)
+          .single();
+      final fullName = data['full_name'] as String? ?? 'Resident';
+      if (mounted) {
+        setState(() => _userName = fullName.split(' ').first);
+      }
+    } catch (_) {
+      // Falls back to 'Resident' silently
+    }
   }
 
   Future<void> _initializeLiveTracking() async {
@@ -508,7 +528,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Hello, $userName",
+            "Hello, $_userName",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.secondaryColor1.withValues(alpha: 0.6), fontWeight: FontWeight.bold, letterSpacing: 1.1),
             ),
             SizedBox(height: Responsive.h(context, 4)),

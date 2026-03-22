@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/utils/responsive.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/complaint_model.dart';
 import 'detail_data_row.dart';
 
@@ -54,7 +55,27 @@ class PendingComplaintView extends StatelessWidget {
                         content: const Text("Are you sure you want to cancel this complaint? This action cannot be undone."),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("No, Keep It")),
-                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Yes, Cancel", style: TextStyle(color: Colors.red))),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx); // Close the dialog
+                              try {
+                                await Supabase.instance.client
+                                    .from('complaints')
+                                    .delete()
+                                    .eq('id', complaint.dbId);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Complaint cancelled successfully.')));
+                                  // Pop the Complaint Details page entirely
+                                  Navigator.pop(context, true);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to cancel: $e')));
+                                }
+                              }
+                            },
+                            child: const Text("Yes, Cancel", style: TextStyle(color: Colors.red)),
+                          ),
                         ],
                       ),
                     );

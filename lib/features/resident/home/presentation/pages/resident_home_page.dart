@@ -958,6 +958,7 @@ class _ResidentHomePageState extends State<ResidentHomePage> {
             context,
             Complaint(
               id: "8795",
+              dbId: "8795",
               category: "Overflowing Bin",
               status: "In Progress",
               statusTitle: "Team Assigned",

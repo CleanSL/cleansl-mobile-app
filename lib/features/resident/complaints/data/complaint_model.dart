@@ -1,5 +1,6 @@
 class Complaint {
-  final String id;
+  final String id; // Truncated UI Display ID
+  final String dbId; // Actual Supabase UUID for backend operations
   final String category;
   final String status; // "Pending", "In Progress", "Resolved"
   final String statusTitle;
@@ -13,6 +14,7 @@ class Complaint {
 
   Complaint({
     required this.id,
+    required this.dbId,
     required this.category,
     required this.status,
     required this.statusTitle,
@@ -32,6 +34,7 @@ class Complaint {
     
     return Complaint(
       id: fullId.length >= 8 ? fullId.substring(0, 8).toUpperCase() : fullId.toUpperCase(),
+      dbId: fullId,
       category: (json['prediction'] as String?) ?? 
                 (json['category'] as String?) ?? 
                 (json['location_name'] as String?) ?? 

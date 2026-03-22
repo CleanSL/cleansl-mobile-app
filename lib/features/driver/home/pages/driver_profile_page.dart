@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'report_history_screen.dart'; // Make sure this path points to Nafhath's history screen
 
 class DriverProfilePage extends StatelessWidget {
@@ -162,8 +163,12 @@ class DriverProfilePage extends StatelessWidget {
                 text: "Sign Out",
                 icon: Icons.logout_rounded,
                 color: const Color(0xFFC62828), // Deep red for destructive action
-                onPressed: () {
-                  // Add your sign-out logic here
+                onPressed: () async {
+                  await Supabase.instance.client.auth.signOut();
+                  // Break the entire navigation stack and reset to the beginning
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(context, '/language', (route) => false);
+                  }
                 },
               ),
               

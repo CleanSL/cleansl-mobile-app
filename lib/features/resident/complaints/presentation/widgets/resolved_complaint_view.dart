@@ -159,7 +159,26 @@ class ResolvedComplaintView extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTheme.space16),
             child: Stack(
               children: [
-                Image.asset(complaint.imagePath, width: double.infinity, height: 180, fit: BoxFit.cover),
+                complaint.isLocal
+                    ? Image.asset(
+                        complaint.imagePath,
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        complaint.imagePath,
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 180,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.grey),
+                          ),
+                        ),
+                      ),
                 Positioned(
                   top: 12,
                   left: 12,

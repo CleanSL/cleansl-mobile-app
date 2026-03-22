@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -110,10 +111,21 @@ class AuthService {
 
   Future<void> verifyDriverOTP({required String mobile, required String token}) async {
     final formattedNumber = '+94$mobile';
-    final AuthResponse response = await _supabase.auth.verifyOTP(phone: formattedNumber, token: token, type: OtpType.sms);
+    debugPrint('[DriverAuth] Verifying OTP for $formattedNumber — token: $token');
 
-    if (response.user == null) {
-      throw Exception("Verification failed. Please try again.");
+    try {
+      final AuthResponse response = await _supabase.auth.verifyOTP(
+        phone: formattedNumber,
+        token: token,
+        type: OtpType.sms,
+      );
+      debugPrint('[DriverAuth] Success — user: ${response.user?.id}');
+      if (response.user == null) {
+        throw Exception("Verification failed. Please try again.");
+      }
+    } on AuthException catch (e) {
+      debugPrint('[DriverAuth] AuthException: ${e.message} (status: ${e.statusCode})');
+      throw Exception("Invalid OTP — ${e.message}");
     }
   }
 }

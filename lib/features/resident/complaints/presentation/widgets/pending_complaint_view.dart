@@ -103,7 +103,26 @@ class PendingComplaintView extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTheme.space16),
             child: Stack(
               children: [
-                Image.asset(complaint.imagePath, width: double.infinity, height: 220, fit: BoxFit.cover),
+                complaint.isLocal
+                    ? Image.asset(
+                        complaint.imagePath,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        complaint.imagePath,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 220,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.grey),
+                          ),
+                        ),
+                      ),
                 Positioned(
                   bottom: AppTheme.space16, right: AppTheme.space16,
                   child: CircleAvatar(

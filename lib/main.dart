@@ -69,11 +69,25 @@ Future<void> main() async {
     debugPrint('Initialization error: $e');
   }
 
-  // Determine the start route based on existing session
+  // Determine the start route based on existing session AND user role
   String startRoute = '/language';
   try {
     final session = Supabase.instance.client.auth.currentSession;
-    if (session != null) startRoute = '/resident-main';
+    if (session != null) {
+      // Check the user's role before routing — drivers go to driver-home
+      final userId = session.user.id;
+      final userRow = await Supabase.instance.client
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .maybeSingle();
+      final role = userRow?['role'] as String?;
+      if (role == 'driver') {
+        startRoute = '/driver-home';
+      } else {
+        startRoute = '/resident-main';
+      }
+    }
   } catch (_) {}
 
   runApp(SmartResidentApp(initialRoute: startRoute));

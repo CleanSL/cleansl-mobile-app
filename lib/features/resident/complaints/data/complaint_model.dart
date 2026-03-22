@@ -25,19 +25,27 @@ class Complaint {
     this.completionDate,
   });
 
-  /// Parses a complaint row returned by GET /api/complaints
+  /// Parses a complaint row returned by Supabase (handles both ML table and legacy schema)
   factory Complaint.fromJson(Map<String, dynamic> json) {
     final rawStatus = (json['status'] as String?) ?? 'pending';
-    final fullId = (json['id'] as String?) ?? '';
+    final fullId = json['id']?.toString() ?? '';
+    
     return Complaint(
       id: fullId.length >= 8 ? fullId.substring(0, 8).toUpperCase() : fullId.toUpperCase(),
-      category: (json['location_name'] as String?) ?? 'General Complaint',
+      category: (json['prediction'] as String?) ?? 
+                (json['category'] as String?) ?? 
+                (json['location_name'] as String?) ?? 
+                'General Complaint',
       status: _mapStatus(rawStatus),
       statusTitle: _mapStatusTitle(rawStatus),
       statusDescription: _mapStatusDesc(rawStatus),
       dateSubmitted: _formatDate(json['created_at'] as String?),
-      fullDescription: (json['complaint_text'] as String?) ?? '',
-      imagePath: (json['photo_url'] as String?) ?? '',
+      fullDescription: (json['description'] as String?) ?? 
+                       (json['complaint_text'] as String?) ?? 
+                       '',
+      imagePath: (json['image_url'] as String?) ?? 
+                 (json['photo_url'] as String?) ?? 
+                 '',
       isLocal: false,
     );
   }

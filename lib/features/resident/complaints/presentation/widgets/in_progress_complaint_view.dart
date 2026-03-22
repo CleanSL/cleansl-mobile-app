@@ -92,7 +92,26 @@ class InProgressComplaintView extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  child: Image.asset(complaint.imagePath, width: double.infinity, height: 180, fit: BoxFit.cover),
+                  child: complaint.isLocal
+                      ? Image.asset(
+                          complaint.imagePath,
+                          width: double.infinity,
+                          height: 180,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          complaint.imagePath,
+                          width: double.infinity,
+                          height: 180,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 180,
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.grey),
+                            ),
+                          ),
+                        ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(Responsive.w(context, AppTheme.space24)),

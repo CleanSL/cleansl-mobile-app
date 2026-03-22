@@ -11,4 +11,5 @@ class ApiConstants {
   static String get complaintsUrl => '$baseUrl/api/complaints';
   static String get scheduleUrl   => '$baseUrl/api/schedule';
   static String get notifyUrl     => '$baseUrl/api/notify';
+  static String get transcribeUrl => '$baseUrl/transcribe';
 }

@@ -13,11 +13,15 @@ class LaneHousesPage extends StatefulWidget {
   State<LaneHousesPage> createState() => _LaneHousesPageState();
 }
 
-class _LaneHousesPageState extends State<LaneHousesPage> {
-  // This Set keeps track of which houses have been marked with an issue.
-  final Set<int> _housesWithIssues = {};
+enum HouseStatus { pending, collected, issue }
 
-  Future<void> _reportIssue(int houseNumber) async {
+class _LaneHousesPageState extends State<LaneHousesPage> {
+  // This Map keeps track of each house's status.
+  final Map<int, HouseStatus> _houseStatuses = {};
+
+  int get _issueCount => _houseStatuses.values.where((s) => s == HouseStatus.issue).length;
+
+  Future<void> _handleLongPress(int houseNumber) async {
     // 1. Navigate to the Voice page and WAIT for the result
     final bool? issueConfirmed = await Navigator.push(
       context,
@@ -33,20 +37,44 @@ class _LaneHousesPageState extends State<LaneHousesPage> {
     // ONLY THEN do we turn the house red.
     if (issueConfirmed == true) {
       setState(() {
-        _housesWithIssues.add(houseNumber);
+        _houseStatuses[houseNumber] = HouseStatus.issue;
       });
       
-      // Optional: Show a quick success snackbar on the grid page!
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Issue reported for House $houseNumber"),
-            backgroundColor: AppTheme.accentColor,
+            backgroundColor: Colors.red.shade600,
             duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
     }
+  }
+
+  void _handleTap(int houseNumber) {
+    setState(() {
+      final current = _houseStatuses[houseNumber] ?? HouseStatus.pending;
+      if (current == HouseStatus.pending) {
+        _houseStatuses[houseNumber] = HouseStatus.collected;
+      } else if (current == HouseStatus.collected) {
+        _houseStatuses[houseNumber] = HouseStatus.pending;
+      } else if (current == HouseStatus.issue) {
+        _houseStatuses[houseNumber] = HouseStatus.pending;
+      }
+    });
+  }
+
+  void _handleDoubleTap(int houseNumber) {
+    setState(() {
+      final current = _houseStatuses[houseNumber] ?? HouseStatus.pending;
+      if (current == HouseStatus.issue) {
+        _houseStatuses[houseNumber] = HouseStatus.pending;
+      } else {
+        _houseStatuses[houseNumber] = HouseStatus.issue;
+      }
+    });
   }
 
   @override
@@ -89,7 +117,7 @@ class _LaneHousesPageState extends State<LaneHousesPage> {
           ),
           SizedBox(height: Responsive.h(context, 8)),
           Text(
-            "${widget.totalHouses} Houses  •  ${_housesWithIssues.length} Issues",
+            "${widget.totalHouses} Houses  •  $_issueCount Issues",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textColor.withValues(alpha: 0.7), fontSize: Responsive.sp(context, 16)),
           ),
         ],
@@ -114,22 +142,38 @@ class _LaneHousesPageState extends State<LaneHousesPage> {
       itemCount: widget.totalHouses,
       itemBuilder: (context, index) {
         final int houseNumber = index + 1;
-        final bool hasIssue = _housesWithIssues.contains(houseNumber);
+        final status = _houseStatuses[houseNumber] ?? HouseStatus.pending;
+
+        Color bgColor;
+        Color textColor = Colors.white;
+
+        if (status == HouseStatus.collected) {
+          bgColor = AppTheme.accentColor; // Green
+        } else if (status == HouseStatus.issue) {
+          bgColor = Colors.red.shade500; // Red
+        } else {
+          bgColor = Colors.white; // Pending is white
+          textColor = AppTheme.secondaryColor1;
+        }
 
         return GestureDetector(
-          onTap: () => _reportIssue(houseNumber),
+          onTap: () => _handleTap(houseNumber),
+          onDoubleTap: () => _handleDoubleTap(houseNumber),
+          onLongPress: () => _handleLongPress(houseNumber),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              // Green if normal, Red if issue reported
-              color: hasIssue ? Colors.red.shade500 : AppTheme.accentColor,
+              color: bgColor,
               borderRadius: BorderRadius.circular(Responsive.r(context, 20)),
-              boxShadow: [BoxShadow(color: (hasIssue ? Colors.red : AppTheme.accentColor).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))],
+              boxShadow: [BoxShadow(color: bgColor.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 4))],
+              border: status == HouseStatus.pending 
+                  ? Border.all(color: AppTheme.secondaryColor1.withValues(alpha: 0.1), width: 1.5) 
+                  : null,
             ),
             child: Center(
               child: Text(
                 "$houseNumber",
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(color: textColor, fontWeight: FontWeight.w900),
               ),
             ),
           ),

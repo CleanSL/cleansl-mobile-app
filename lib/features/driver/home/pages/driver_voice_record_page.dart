@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/responsive.dart';
 import '../../../../shared/widgets/cleansl_button.dart';
+import '../../../../../core/constants/api_constants.dart';
 import 'report_history_screen.dart';
 
 class VoiceRecordPage extends StatefulWidget {
@@ -119,7 +120,7 @@ class _VoiceRecordPageState extends State<VoiceRecordPage> {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://cleansl-driver-report-1.onrender.com/transcribe'),
+        Uri.parse(ApiConstants.transcribeUrl),
       );
       request.files.add(
         await http.MultipartFile.fromPath('audio', uploadFilePath),

@@ -82,7 +82,10 @@ Future<void> main() async {
           .eq('id', userId)
           .maybeSingle();
       final role = userRow?['role'] as String?;
-      if (role == 'driver') {
+      final phone = session.user.phone;
+
+      // Drivers login via OTP, so their phone will be present. Residents use Email/Google.
+      if (role == 'driver' || (phone != null && phone.isNotEmpty)) {
         startRoute = '/driver-home';
       } else {
         startRoute = '/resident-main';

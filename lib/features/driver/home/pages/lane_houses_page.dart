@@ -27,6 +27,7 @@ class _LaneHousesPageState extends State<LaneHousesPage> {
       context,
       MaterialPageRoute(
         builder: (context) => VoiceRecordPage(
+          taskId: "mock-task-id-$houseNumber", // ⚠️ TODO: Replace with real collection_tasks.id in Step 4
           laneName: widget.laneName,
           houseNumber: houseNumber,
         ),

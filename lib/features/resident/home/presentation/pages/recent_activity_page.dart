@@ -113,6 +113,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       actionText: "TRACK STATUS",
       complaint: Complaint(
         id: "8795",
+        dbId: "8795",
         category: "Overflowing Bin",
         status: "In Progress",
         statusTitle: "Team Assigned",
@@ -164,6 +165,7 @@ class _RecentActivityPageState extends State<RecentActivityPage> {
       actionText: "FEEDBACK",
       complaint: Complaint(
         id: "8612",
+        dbId: "8612",
         category: "Broken Bin",
         status: "Resolved",
         statusTitle: "Replacement Completed",

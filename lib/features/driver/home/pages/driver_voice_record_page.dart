@@ -13,10 +13,11 @@ import '../../../../../core/constants/api_constants.dart';
 import 'report_history_screen.dart';
 
 class VoiceRecordPage extends StatefulWidget {
+  final String taskId;
   final String laneName;
   final int houseNumber;
 
-  const VoiceRecordPage({super.key, required this.laneName, required this.houseNumber});
+  const VoiceRecordPage({super.key, required this.taskId, required this.laneName, required this.houseNumber});
 
   @override
   State<VoiceRecordPage> createState() => _VoiceRecordPageState();
@@ -122,6 +123,7 @@ class _VoiceRecordPageState extends State<VoiceRecordPage> {
         'POST',
         Uri.parse(ApiConstants.transcribeUrl),
       );
+      request.fields['task_id'] = widget.taskId;
       request.files.add(
         await http.MultipartFile.fromPath('audio', uploadFilePath),
       );

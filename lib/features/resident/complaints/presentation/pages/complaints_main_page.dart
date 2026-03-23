@@ -31,6 +31,7 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
   final List<Complaint> _dummyComplaints = [
     Complaint(
       id: 'DEMO-8795',
+      dbId: 'DEMO-8795',
       category: 'Overflowing Bin',
       status: 'In Progress',
       statusTitle: 'Field Team Assigned',
@@ -43,6 +44,7 @@ class _ComplaintsMainPageState extends State<ComplaintsMainPage> {
     ),
     Complaint(
       id: 'DEMO-8612',
+      dbId: 'DEMO-8612',
       category: 'Broken Bin',
       status: 'Resolved',
       statusTitle: 'Issue Resolved',
